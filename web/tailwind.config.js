@@ -19,21 +19,12 @@ export default {
           800: '#3730a3',
           900: '#312e81',
         },
-        accent: {
-          emerald: '#10b981',
-          violet: '#8b5cf6',
-          orange: '#f59e0b',
-        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-mesh': 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)',
-      },
-      backdropBlur: {
-        xs: '2px',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
