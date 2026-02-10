@@ -36,118 +36,37 @@ export function PowerCalculation({
 }: PowerCalculationProps) {
   const timeMs = powerCalcData.time.map(t => (t * 1000).toFixed(1));
 
-  // Top subplot: V(t) and I(t)
-  const waveformData = {
-    labels: timeMs,
-    datasets: [
-      {
-        label: 'v(t)',
-        data: powerCalcData.voltage,
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        borderWidth: 2,
-        pointRadius: 0,
-        yAxisID: 'y-voltage',
-      },
-      {
-        label: 'i(t)',
-        data: powerCalcData.current,
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderWidth: 2,
-        pointRadius: 0,
-        yAxisID: 'y-current',
-      },
-    ],
-  };
-
-  // Bottom subplot: p(t) = v(t) × i(t) with fill
   const powerData = {
     labels: timeMs,
     datasets: [
       {
         label: 'p(t) = v(t) × i(t)',
         data: powerCalcData.powerInstantaneous,
-        borderColor: 'rgb(34, 197, 94)',
+        borderColor: '#10b981',
         backgroundColor: (context: any) => {
-          const value = context.parsed?.y;
-          if (value === undefined) return 'rgba(34, 197, 94, 0.2)';
+          const chart = context.chart;
+          const { chartArea } = chart;
+          if (!chartArea) return 'rgba(16, 185, 129, 0.3)';
+          
+          const value = context.parsed?.y ?? 0;
           return value >= 0 
-            ? 'rgba(34, 197, 94, 0.3)'  // Green for positive (to load)
-            : 'rgba(255, 165, 0, 0.3)';  // Orange for negative (from inductor)
+            ? 'rgba(16, 185, 129, 0.3)'
+            : 'rgba(245, 158, 11, 0.3)';
         },
-        borderWidth: 2,
+        borderWidth: 2.5,
         pointRadius: 0,
         fill: 'origin',
+        tension: 0.4,
         segment: {
           backgroundColor: (ctx: any) => {
             const value = ctx.p1.parsed.y;
             return value >= 0 
-              ? 'rgba(34, 197, 94, 0.3)'
-              : 'rgba(255, 165, 0, 0.3)';
+              ? 'rgba(16, 185, 129, 0.3)'
+              : 'rgba(245, 158, 11, 0.3)';
           },
         },
       },
     ],
-  };
-
-  const waveformOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: 'index' as const,
-      intersect: false,
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const,
-      },
-      tooltip: {
-        enabled: false,
-      },
-    },
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: 'Time (ms)',
-        },
-        ticks: {
-          maxTicksLimit: 10,
-        },
-      },
-      'y-voltage': {
-        type: 'linear' as const,
-        position: 'left' as const,
-        title: {
-          display: true,
-          text: 'Voltage (V)',
-          color: 'rgb(59, 130, 246)',
-        },
-        grid: {
-          display: true,
-        },
-        ticks: {
-          color: 'rgb(59, 130, 246)',
-        },
-      },
-      'y-current': {
-        type: 'linear' as const,
-        position: 'right' as const,
-        title: {
-          display: true,
-          text: 'Current (A)',
-          color: 'rgb(239, 68, 68)',
-        },
-        grid: {
-          display: false,
-        },
-        ticks: {
-          color: 'rgb(239, 68, 68)',
-        },
-      },
-    },
   };
 
   const powerOptions = {
@@ -161,6 +80,14 @@ export function PowerCalculation({
       legend: {
         display: true,
         position: 'top' as const,
+        labels: {
+          color: '#e5e7eb',
+          font: {
+            size: 11,
+            weight: 500 as const,
+          },
+          padding: 8,
+        },
       },
       tooltip: {
         enabled: false,
@@ -171,96 +98,121 @@ export function PowerCalculation({
         title: {
           display: true,
           text: 'Time (ms)',
+          color: '#9ca3af',
+          font: {
+            size: 11,
+            weight: 600,
+          },
         },
         ticks: {
-          maxTicksLimit: 10,
+          maxTicksLimit: 8,
+          color: '#9ca3af',
+          font: {
+            size: 10,
+          },
+        },
+        grid: {
+          color: 'rgba(148, 163, 184, 0.1)',
         },
       },
       y: {
         title: {
           display: true,
           text: 'Instantaneous Power (W)',
+          color: '#9ca3af',
+          font: {
+            size: 11,
+            weight: 600,
+          },
         },
         grid: {
-          display: true,
+          color: 'rgba(148, 163, 184, 0.1)',
+        },
+        ticks: {
+          color: '#9ca3af',
+          font: {
+            size: 10,
+          },
         },
       },
     },
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-800">
-          Power Calculation: p(t) = v(t) × i(t)
+    <div className="glass-dark rounded-xl p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-white">
+          Power Calculation
         </h2>
-        <select
-          value={side}
-          onChange={e => onSideChange(e.target.value as TransformerSide)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="primary">Primary Side</option>
-          <option value="secondary">Secondary Side</option>
-        </select>
-      </div>
-
-      <div className="space-y-6">
-        {/* Waveforms subplot */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">
-            Voltage and Current Waveforms
-          </h3>
-          <div className="h-48">
-            <Line data={waveformData} options={waveformOptions} />
-          </div>
-        </div>
-
-        {/* Instantaneous power subplot */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">
-            Instantaneous Power
-          </h3>
-          <div className="h-64">
-            <Line data={powerData} options={powerOptions} />
-          </div>
+        
+        <div className="flex gap-1 glass rounded-lg p-1">
+          <button
+            onClick={() => onSideChange('primary')}
+            className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+              ${side === 'primary'
+                ? 'bg-primary-500 text-white shadow-lg' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+          >
+            Primary
+          </button>
+          <button
+            onClick={() => onSideChange('secondary')}
+            className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+              ${side === 'secondary'
+                ? 'bg-primary-500 text-white shadow-lg' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+          >
+            Secondary
+          </button>
         </div>
       </div>
 
-      {/* Power metrics */}
-      <div className="mt-6 grid grid-cols-4 gap-4 text-sm">
-        <div className="flex flex-col">
-          <span className="text-gray-600">Active Power (P):</span>
-          <span className="text-lg font-semibold text-green-600">
-            {powerCalcData.powerActive.toFixed(2)} W
-          </span>
+      <div className="flex-1 min-h-0">
+        <Line data={powerData} options={powerOptions} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-4 gap-2">
+        <div className="metric-card">
+          <div className="text-xs text-gray-400">P</div>
+          <div className="text-base font-bold text-accent-emerald tabular-nums">
+            {powerCalcData.powerActive.toFixed(1)}
+          </div>
+          <div className="text-xs text-gray-500">W</div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-gray-600">Reactive Power (Q):</span>
-          <span className="text-lg font-semibold text-blue-600">
-            {powerCalcData.powerReactive.toFixed(2)} VAR
-          </span>
+        <div className="metric-card">
+          <div className="text-xs text-gray-400">Q</div>
+          <div className="text-base font-bold text-primary-400 tabular-nums">
+            {powerCalcData.powerReactive.toFixed(1)}
+          </div>
+          <div className="text-xs text-gray-500">VAR</div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-gray-600">Apparent Power (S):</span>
-          <span className="text-lg font-semibold text-purple-600">
-            {powerCalcData.powerApparent.toFixed(2)} VA
-          </span>
+        <div className="metric-card">
+          <div className="text-xs text-gray-400">S</div>
+          <div className="text-base font-bold text-accent-violet tabular-nums">
+            {powerCalcData.powerApparent.toFixed(1)}
+          </div>
+          <div className="text-xs text-gray-500">VA</div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-gray-600">Power Factor:</span>
-          <span className="text-lg font-semibold text-gray-800">
+        <div className="metric-card">
+          <div className="text-xs text-gray-400">PF</div>
+          <div className="text-base font-bold text-white tabular-nums">
             {powerCalcData.powerFactor.toFixed(3)}
-          </span>
+          </div>
+          <div className="text-xs text-gray-500">-</div>
         </div>
       </div>
 
-      <div className="mt-4 text-xs text-gray-600">
-        <p>
-          <span className="inline-block w-3 h-3 bg-green-500 bg-opacity-30 mr-1"></span>
-          Green shading: Positive power (energy flowing to load)
-          <span className="ml-4 inline-block w-3 h-3 bg-orange-500 bg-opacity-30 mr-1"></span>
-          Orange shading: Negative power (energy returned from inductor)
-        </p>
+      <div className="mt-3 text-xs text-gray-400 flex items-center justify-center gap-4">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 bg-accent-emerald/30 rounded"></div>
+          <span>Energy to load</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 bg-accent-orange/30 rounded"></div>
+          <span>Energy returned</span>
+        </div>
       </div>
     </div>
   );

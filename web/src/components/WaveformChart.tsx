@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -25,58 +26,77 @@ interface WaveformChartProps {
   waveformData: WaveformData;
 }
 
+type ViewMode = 'primary' | 'secondary' | 'both';
+
 export function WaveformChart({ waveformData }: WaveformChartProps) {
-  // Primary side data
-  const primaryData = {
-    labels: waveformData.time.map(t => (t * 1000).toFixed(1)), // Convert to ms
-    datasets: [
-      {
-        label: 'V₁(t)',
-        data: waveformData.v1,
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        borderWidth: 2,
-        pointRadius: 0,
-        yAxisID: 'y-voltage',
-      },
-      {
-        label: 'I₁(t)',
-        data: waveformData.i1,
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderWidth: 2,
-        pointRadius: 0,
-        yAxisID: 'y-current',
-      },
-    ],
+  const [viewMode, setViewMode] = useState<ViewMode>('both');
+
+  const timeMs = waveformData.time.map(t => (t * 1000).toFixed(1));
+
+  const getDatasets = () => {
+    const datasets = [];
+    
+    if (viewMode === 'primary' || viewMode === 'both') {
+      datasets.push(
+        {
+          label: 'V₁(t)',
+          data: waveformData.v1,
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          yAxisID: 'y-voltage',
+          tension: 0.4,
+        },
+        {
+          label: 'I₁(t)',
+          data: waveformData.i1,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          yAxisID: 'y-current',
+          tension: 0.4,
+        }
+      );
+    }
+    
+    if (viewMode === 'secondary' || viewMode === 'both') {
+      datasets.push(
+        {
+          label: 'V₂(t)',
+          data: waveformData.v2,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          yAxisID: 'y-voltage',
+          tension: 0.4,
+          borderDash: viewMode === 'both' ? [5, 3] : undefined,
+        },
+        {
+          label: 'I₂(t)',
+          data: waveformData.i2,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          yAxisID: 'y-current',
+          tension: 0.4,
+          borderDash: viewMode === 'both' ? [5, 3] : undefined,
+        }
+      );
+    }
+    
+    return datasets;
   };
 
-  // Secondary side data
-  const secondaryData = {
-    labels: waveformData.time.map(t => (t * 1000).toFixed(1)),
-    datasets: [
-      {
-        label: 'V₂(t)',
-        data: waveformData.v2,
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        borderWidth: 2,
-        pointRadius: 0,
-        yAxisID: 'y-voltage',
-      },
-      {
-        label: 'I₂(t)',
-        data: waveformData.i2,
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderWidth: 2,
-        pointRadius: 0,
-        yAxisID: 'y-current',
-      },
-    ],
+  const data = {
+    labels: timeMs,
+    datasets: getDatasets(),
   };
 
-  const commonOptions = {
+  const options = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -87,6 +107,15 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
       legend: {
         display: true,
         position: 'top' as const,
+        labels: {
+          color: '#e5e7eb',
+          font: {
+            size: 11,
+            weight: 500 as const,
+          },
+          padding: 8,
+          usePointStyle: true,
+        },
       },
       tooltip: {
         enabled: false,
@@ -97,9 +126,21 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         title: {
           display: true,
           text: 'Time (ms)',
+          color: '#9ca3af',
+          font: {
+            size: 11,
+            weight: 600,
+          },
         },
         ticks: {
-          maxTicksLimit: 10,
+          maxTicksLimit: 8,
+          color: '#9ca3af',
+          font: {
+            size: 10,
+          },
+        },
+        grid: {
+          color: 'rgba(148, 163, 184, 0.1)',
         },
       },
       'y-voltage': {
@@ -108,13 +149,20 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         title: {
           display: true,
           text: 'Voltage (V)',
-          color: 'rgb(59, 130, 246)',
+          color: '#6366f1',
+          font: {
+            size: 11,
+            weight: 600,
+          },
         },
         grid: {
-          display: true,
+          color: 'rgba(148, 163, 184, 0.1)',
         },
         ticks: {
-          color: 'rgb(59, 130, 246)',
+          color: '#6366f1',
+          font: {
+            size: 10,
+          },
         },
       },
       'y-current': {
@@ -123,47 +171,55 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         title: {
           display: true,
           text: 'Current (A)',
-          color: 'rgb(239, 68, 68)',
+          color: '#10b981',
+          font: {
+            size: 11,
+            weight: 600,
+          },
         },
         grid: {
           display: false,
         },
         ticks: {
-          color: 'rgb(239, 68, 68)',
+          color: '#10b981',
+          font: {
+            size: 10,
+          },
         },
       },
     },
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">
-        Voltage & Current Waveforms
-      </h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Primary Side */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Primary Side</h3>
-          <div className="h-64">
-            <Line data={primaryData} options={commonOptions} />
-          </div>
-        </div>
-
-        {/* Secondary Side */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Secondary Side</h3>
-          <div className="h-64">
-            <Line data={secondaryData} options={commonOptions} />
-          </div>
+    <div className="glass-dark rounded-xl p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-white">Voltage & Current Waveforms</h2>
+        
+        <div className="flex gap-1 glass rounded-lg p-1">
+          {(['primary', 'secondary', 'both'] as ViewMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+                ${viewMode === mode 
+                  ? 'bg-primary-500 text-white shadow-lg' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+            >
+              {mode === 'both' ? 'Both' : mode === 'primary' ? 'Primary' : 'Secondary'}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="mt-4 text-xs text-gray-600">
-        <p>
-          Blue lines represent voltage waveforms, red lines represent current waveforms.
-          Note the phase shift between voltage and current due to the inductive load.
-        </p>
+      <div className="flex-1 min-h-0">
+        <Line data={data} options={options} />
+      </div>
+
+      <div className="mt-3 text-xs text-gray-400 text-center">
+        {viewMode === 'both' && 'Solid lines: Primary • Dashed lines: Secondary'}
+        {viewMode === 'primary' && 'Showing primary side waveforms'}
+        {viewMode === 'secondary' && 'Showing secondary side waveforms'}
       </div>
     </div>
   );
