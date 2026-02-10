@@ -35,13 +35,21 @@ const GRID_TRANSFORMER_PARAMS: TransformerParams = {
  * Manages transformer parameters as React state and provides
  * calculated values, waveform data, and power calculation data.
  * All values are recalculated automatically when parameters change.
+ * 
+ * @param overrideParams - Optional parameter overrides (e.g., for load disconnect)
  */
-export function useTransformer() {
+export function useTransformer(overrideParams?: Partial<TransformerParams>) {
   const [params, setParams] = useState<TransformerParams>(DEFAULT_PARAMS);
   const [powerCalcSide, setPowerCalcSide] = useState<TransformerSide>('primary');
 
+  // Merge params with any overrides
+  const effectiveParams = useMemo(
+    () => ({ ...params, ...overrideParams }),
+    [params, overrideParams]
+  );
+
   // Create transformer instance and calculate values
-  const transformer = useMemo(() => new Transformer(params), [params]);
+  const transformer = useMemo(() => new Transformer(effectiveParams), [effectiveParams]);
   const values = useMemo(() => transformer.calculate(), [transformer]);
   const waveformData = useMemo(() => transformer.getWaveformData(), [transformer]);
   const powerCalcData = useMemo(

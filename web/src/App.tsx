@@ -6,6 +6,10 @@ import { WaveformChart } from './components/WaveformChart';
 import { PowerCalculation } from './components/PowerCalculation';
 
 function App() {
+  const [isControlsExpanded, setIsControlsExpanded] = useState(false);
+  const [loadDisconnected, setLoadDisconnected] = useState(false);
+
+  // Pass override params to hook when load is disconnected
   const {
     params,
     values,
@@ -16,9 +20,9 @@ function App() {
     loadGridTransformer,
     setPowerCalcSide,
     powerCalcSide,
-  } = useTransformer();
-
-  const [isControlsExpanded, setIsControlsExpanded] = useState(false);
+  } = useTransformer(
+    loadDisconnected ? { resistanceLoad: 1e9 } : undefined // 1GΩ = open circuit
+  );
 
   return (
     <div className="h-full flex flex-col">
@@ -72,6 +76,8 @@ function App() {
         onParamChange={updateParam}
         onReset={resetParams}
         onLoadGridTransformer={loadGridTransformer}
+        loadDisconnected={loadDisconnected}
+        onLoadDisconnectToggle={() => setLoadDisconnected(!loadDisconnected)}
       />
     </div>
   );

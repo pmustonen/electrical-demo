@@ -8,6 +8,8 @@ interface ControlBarProps {
   onParamChange: (key: keyof TransformerParams, value: number) => void;
   onReset: () => void;
   onLoadGridTransformer: () => void;
+  loadDisconnected: boolean;
+  onLoadDisconnectToggle: () => void;
 }
 
 interface SliderConfig {
@@ -30,7 +32,16 @@ const SLIDER_CONFIGS: SliderConfig[] = [
   { key: 'resistanceLoad', label: 'Load Resistance', symbol: 'Rₗ', min: 0.1, max: 100, step: 0.1, unit: 'Ω' },
 ];
 
-export function ControlBar({ isExpanded, onToggle, params, onParamChange, onReset, onLoadGridTransformer }: ControlBarProps) {
+export function ControlBar({ 
+  isExpanded, 
+  onToggle, 
+  params, 
+  onParamChange, 
+  onReset, 
+  onLoadGridTransformer,
+  loadDisconnected,
+  onLoadDisconnectToggle 
+}: ControlBarProps) {
   const [dragValue, setDragValue] = useState<{ key: keyof TransformerParams; value: number } | null>(null);
 
   const handleSliderChange = (key: keyof TransformerParams, value: number) => {
@@ -68,6 +79,18 @@ export function ControlBar({ isExpanded, onToggle, params, onParamChange, onRese
         </div>
         
         <div className="flex items-center gap-3">
+          {/* Load Disconnect Toggle */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onLoadDisconnectToggle(); }}
+            className={`px-3 py-1 glass rounded transition-colors text-xs font-medium border
+              ${loadDisconnected
+                ? 'bg-red-500/20 text-red-400 border-red-500/50'
+                : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
+              }`}
+            title={loadDisconnected ? 'Connect load (idle mode)' : 'Disconnect load (idle mode)'}
+          >
+            {loadDisconnected ? '⚡ No Load' : '🔌 Load Connected'}
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); onLoadGridTransformer(); }}
             className="px-3 py-1 glass rounded hover:bg-primary-500/20 transition-colors text-xs text-primary-400 border border-primary-500/30"
@@ -98,15 +121,18 @@ export function ControlBar({ isExpanded, onToggle, params, onParamChange, onRese
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
             {SLIDER_CONFIGS.map(config => {
               const displayValue = dragValue?.key === config.key ? dragValue.value : params[config.key];
+              const isLoadResistance = config.key === 'resistanceLoad';
+              const isDisabled = isLoadResistance && loadDisconnected;
               
               return (
-                <div key={config.key} className="space-y-1.5">
+                <div key={config.key} className={`space-y-1.5 ${isDisabled ? 'opacity-40' : ''}`}>
                   <div className="flex justify-between items-baseline">
                     <label className="text-xs font-medium text-gray-300">
                       {config.label}
+                      {isDisabled && ' (Disconnected)'}
                     </label>
                     <span className="text-sm font-bold text-primary-400 tabular-nums">
-                      {displayValue.toFixed(1)}{config.unit}
+                      {isDisabled ? '∞' : `${displayValue.toFixed(1)}${config.unit}`}
                     </span>
                   </div>
                   <input
@@ -115,6 +141,7 @@ export function ControlBar({ isExpanded, onToggle, params, onParamChange, onRese
                     max={config.max}
                     step={config.step}
                     value={displayValue}
+                    disabled={isDisabled}
                     onChange={e => handleSliderChange(config.key, parseFloat(e.target.value))}
                     onMouseUp={e => handleSliderCommit(config.key, parseFloat((e.target as HTMLInputElement).value))}
                     onTouchEnd={e => handleSliderCommit(config.key, parseFloat((e.target as HTMLInputElement).value))}
