@@ -234,6 +234,12 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
     ? frozenRangesRef.current 
     : getCurrentRanges();
 
+  // Get axis colors based on view mode
+  const axisColors = {
+    voltage: viewMode === 'secondary' ? '#8b5cf6' : '#6366f1', // Purple for secondary, Blue for primary
+    current: viewMode === 'secondary' ? '#f59e0b' : '#10b981', // Orange for secondary, Green for primary
+  };
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -289,7 +295,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         title: {
           display: true,
           text: 'Voltage (V)',
-          color: '#6366f1',
+          color: axisColors.voltage,
           font: {
             size: 11,
             weight: 600,
@@ -299,7 +305,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
           color: 'rgba(148, 163, 184, 0.1)',
         },
         ticks: {
-          color: '#6366f1',
+          color: axisColors.voltage,
           font: {
             size: 10,
           },
@@ -313,7 +319,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         title: {
           display: true,
           text: 'Current (A)',
-          color: '#10b981',
+          color: axisColors.current,
           font: {
             size: 11,
             weight: 600,
@@ -323,7 +329,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
           display: false,
         },
         ticks: {
-          color: '#10b981',
+          color: axisColors.current,
           font: {
             size: 10,
           },
