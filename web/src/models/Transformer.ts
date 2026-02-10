@@ -43,7 +43,6 @@ export class Transformer {
       frequency: f,
       turnsRatio: n,
       inductanceMag: Lmag,
-      resistancePrimary: R1,
       resistanceSecondary: R2,
       resistanceLoad: Rload,
     } = this.params;
@@ -177,7 +176,6 @@ export class Transformer {
     cycles: number = 3,
     pointsPerCycle: number = 100
   ): PowerCalculationData {
-    const { frequency: f } = this.params;
     const waveforms = this.getWaveformData(cycles, pointsPerCycle);
     const values = this.calculate();
 

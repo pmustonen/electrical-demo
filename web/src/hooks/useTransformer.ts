@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Transformer } from '../models/Transformer';
-import type { TransformerParams, TransformerValues, TransformerSide } from '../types';
+import type { TransformerParams, TransformerSide } from '../types';
 
 /**
  * Default transformer parameters for educational demonstration
