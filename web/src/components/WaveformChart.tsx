@@ -31,10 +31,26 @@ type ViewMode = 'primary' | 'secondary' | 'both';
 export function WaveformChart({ waveformData }: WaveformChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('both');
   const [axesFrozen, setAxesFrozen] = useState(false);
+  const [showRMS, setShowRMS] = useState(true);
   const frozenRangesRef = useRef<{
     voltage: { min: number; max: number };
     current: { min: number; max: number };
   } | null>(null);
+
+  // Calculate RMS values (Peak / √2)
+  const getRMSValues = () => {
+    const v1Peak = Math.max(...waveformData.v1.map(Math.abs));
+    const v2Peak = Math.max(...waveformData.v2.map(Math.abs));
+    const i1Peak = Math.max(...waveformData.i1.map(Math.abs));
+    const i2Peak = Math.max(...waveformData.i2.map(Math.abs));
+    
+    return {
+      v1: v1Peak / Math.sqrt(2),
+      v2: v2Peak / Math.sqrt(2),
+      i1: i1Peak / Math.sqrt(2),
+      i2: i2Peak / Math.sqrt(2),
+    };
+  };
 
   // Calculate current data ranges based on visible data only
   const getCurrentRanges = () => {
@@ -91,6 +107,11 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
 
   const getDatasets = () => {
     const datasets = [];
+    const rmsValues = getRMSValues();
+    
+    // Helper to create constant RMS line
+    const createRMSLine = (value: number) => 
+      Array(waveformData.time.length).fill(value);
     
     if (viewMode === 'primary' || viewMode === 'both') {
       datasets.push(
@@ -115,6 +136,34 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
           tension: 0.4,
         }
       );
+      
+      // Add RMS lines for primary
+      if (showRMS) {
+        datasets.push(
+          {
+            label: 'V₁ RMS',
+            data: createRMSLine(rmsValues.v1),
+            borderColor: '#6366f1',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [8, 4],
+            pointRadius: 0,
+            yAxisID: 'y-voltage',
+            tension: 0,
+          },
+          {
+            label: 'I₁ RMS',
+            data: createRMSLine(rmsValues.i1),
+            borderColor: '#10b981',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [8, 4],
+            pointRadius: 0,
+            yAxisID: 'y-current',
+            tension: 0,
+          }
+        );
+      }
     }
     
     if (viewMode === 'secondary' || viewMode === 'both') {
@@ -142,6 +191,34 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
           borderDash: viewMode === 'both' ? [5, 3] : undefined,
         }
       );
+      
+      // Add RMS lines for secondary
+      if (showRMS) {
+        datasets.push(
+          {
+            label: 'V₂ RMS',
+            data: createRMSLine(rmsValues.v2),
+            borderColor: '#8b5cf6',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [8, 4],
+            pointRadius: 0,
+            yAxisID: 'y-voltage',
+            tension: 0,
+          },
+          {
+            label: 'I₂ RMS',
+            data: createRMSLine(rmsValues.i2),
+            borderColor: '#f59e0b',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [8, 4],
+            pointRadius: 0,
+            yAxisID: 'y-current',
+            tension: 0,
+          }
+        );
+      }
     }
     
     return datasets;
@@ -261,6 +338,19 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         <h2 className="text-base font-bold text-white">Voltage & Current Waveforms</h2>
         
         <div className="flex items-center gap-2">
+          {/* RMS Toggle */}
+          <button
+            onClick={() => setShowRMS(!showRMS)}
+            className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+              ${showRMS 
+                ? 'bg-primary-500/20 text-primary-400 border border-primary-500/50' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            title={showRMS ? 'Hide RMS lines' : 'Show RMS lines'}
+          >
+            RMS
+          </button>
+
           {/* Freeze Toggle */}
           <button
             onClick={handleFreezeToggle}
@@ -301,6 +391,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         {viewMode === 'both' && 'Solid lines: Primary • Dashed lines: Secondary'}
         {viewMode === 'primary' && 'Showing primary side waveforms'}
         {viewMode === 'secondary' && 'Showing secondary side waveforms'}
+        {showRMS && ' • RMS values shown'}
         {axesFrozen && ' • 🔒 Axes frozen'}
       </div>
     </div>
