@@ -66,6 +66,18 @@ export function PowerCalculation({
           },
         },
       },
+      // Add magnetizing power overlay (only for primary side)
+      ...(side === 'primary' && powerCalcData.powerMagnetizing ? [{
+        label: 'p_mag(t) = v(t) × i_mag(t)',
+        data: powerCalcData.powerMagnetizing,
+        borderColor: '#f59e0b',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [5, 5],
+        pointRadius: 0,
+        fill: false,
+        tension: 0.4,
+      }] : []),
     ],
   };
 
@@ -213,6 +225,12 @@ export function PowerCalculation({
           <div className="w-3 h-3 bg-accent-orange/30 rounded"></div>
           <span>Energy returned</span>
         </div>
+        {side === 'primary' && powerCalcData.powerMagnetizing && (
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-0.5 bg-accent-orange rounded" style={{ borderTop: '2px dashed #f59e0b' }}></div>
+            <span>Pure magnetizing</span>
+          </div>
+        )}
       </div>
     </div>
   );

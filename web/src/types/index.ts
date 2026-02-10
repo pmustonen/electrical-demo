@@ -79,6 +79,9 @@ export interface PowerCalculationData {
   powerReactive: number;           // Reactive power Q (VAR)
   powerApparent: number;           // Apparent power S (VA)
   powerFactor: number;             // Power factor cos(φ)
+  
+  // Magnetizing power (only for primary side)
+  powerMagnetizing: number[] | null;  // Pure magnetizing power p_mag(t) = v(t) × i_mag(t) (W)
 }
 
 /**

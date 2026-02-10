@@ -178,6 +178,7 @@ export class Transformer {
   ): PowerCalculationData {
     const waveforms = this.getWaveformData(cycles, pointsPerCycle);
     const values = this.calculate();
+    const { frequency: f } = this.params;
 
     // Select voltage and current based on side
     const voltage = side === 'primary' ? waveforms.v1 : waveforms.v2;
@@ -200,6 +201,17 @@ export class Transformer {
     const phaseAngle = Math.acos(Math.max(-1, Math.min(1, powerFactor)));
     const powerReactive = powerApparent * Math.sin(phaseAngle);
 
+    // Generate pure magnetizing power waveform (only for primary side)
+    // p_mag(t) = v(t) × i_mag(t) where i_mag lags v by 90°
+    const powerMagnetizing = side === 'primary' ? (() => {
+      const omega = 2 * Math.PI * f;
+      const V1_peak = this.params.voltagePrimary * Math.sqrt(2);
+      const Imag_peak = values.currentMagnetizing * Math.sqrt(2);
+      return waveforms.time.map(t => 
+        V1_peak * Math.sin(omega * t) * Imag_peak * Math.sin(omega * t - Math.PI / 2)
+      );
+    })() : null;
+
     return {
       time: waveforms.time,
       voltage,
@@ -208,6 +220,7 @@ export class Transformer {
       powerActive,
       powerReactive,
       powerApparent,
+      powerMagnetizing,
       powerFactor,
     };
   }
