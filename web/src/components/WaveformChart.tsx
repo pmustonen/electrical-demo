@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -62,14 +62,17 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
     };
   };
 
-  // Update frozen ranges when freeze is toggled on
-  useEffect(() => {
-    if (axesFrozen && !frozenRangesRef.current) {
+  // Handle freeze toggle - capture current ranges when freezing
+  const handleFreezeToggle = () => {
+    if (!axesFrozen) {
+      // Freezing: capture current ranges
       frozenRangesRef.current = getCurrentRanges();
-    } else if (!axesFrozen) {
+    } else {
+      // Unfreezing: clear frozen ranges
       frozenRangesRef.current = null;
     }
-  }, [axesFrozen]);
+    setAxesFrozen(!axesFrozen);
+  };
 
   const timeMs = waveformData.time.map(t => (t * 1000).toFixed(1));
 
@@ -247,7 +250,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         <div className="flex items-center gap-2">
           {/* Freeze Toggle */}
           <button
-            onClick={() => setAxesFrozen(!axesFrozen)}
+            onClick={handleFreezeToggle}
             className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
               ${axesFrozen 
                 ? 'bg-accent-orange/20 text-accent-orange border border-accent-orange/50' 
