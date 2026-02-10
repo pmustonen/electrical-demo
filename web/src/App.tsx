@@ -43,17 +43,17 @@ function App() {
       <main className="flex-1 min-h-0 overflow-hidden p-3">
         <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Power Triangle */}
-          <div className="animate-scale-in">
+          <div className="animate-scale-in min-h-0">
             <PowerTriangle values={values} />
           </div>
 
           {/* Waveforms */}
-          <div className="animate-scale-in" style={{ animationDelay: '50ms' }}>
+          <div className="animate-scale-in min-h-0" style={{ animationDelay: '50ms' }}>
             <WaveformChart waveformData={waveformData} />
           </div>
 
           {/* Power Calculation */}
-          <div className="animate-scale-in" style={{ animationDelay: '100ms' }}>
+          <div className="animate-scale-in min-h-0" style={{ animationDelay: '100ms' }}>
             <PowerCalculation
               powerCalcData={powerCalcData}
               side={powerCalcSide}
