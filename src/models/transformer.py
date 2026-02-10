@@ -257,3 +257,63 @@ class Transformer:
             'resistance_secondary': self.R2,
             'resistance_load': self.R_load,
         }
+    
+    def get_waveform_data(self, num_cycles=3, points_per_cycle=333):
+        """Generate time-domain waveform data for voltage and current.
+        
+        Args:
+            num_cycles: Number of AC cycles to generate (default: 3)
+            points_per_cycle: Number of data points per cycle (default: 333, ~1000 total)
+        
+        Returns:
+            dict: Dictionary containing:
+                - 'time': Time array in seconds
+                - 'v1': Primary voltage waveform (instantaneous values)
+                - 'i1': Primary current waveform (instantaneous values)
+                - 'v2': Secondary voltage waveform (instantaneous values)
+                - 'i2': Secondary current waveform (instantaneous values)
+        """
+        # Get RMS values from existing calculations
+        values = self.get_all_values()
+        V1_rms = values['voltage_primary']
+        I1_rms = values['current_primary']
+        V2_rms = values['voltage_secondary_actual']
+        I2_rms = values['current_secondary']
+        pf = values['power_factor']
+        
+        # Calculate phase angle from power factor
+        # For inductive load, current lags voltage
+        # φ = arccos(pf), where pf = cos(φ)
+        phi = np.arccos(np.clip(pf, -1.0, 1.0))  # Clip to avoid numerical errors
+        
+        # Generate time array
+        period = 1.0 / self.f  # Period of one cycle
+        t_end = num_cycles * period
+        num_points = num_cycles * points_per_cycle
+        time = np.linspace(0, t_end, num_points)
+        
+        # Angular frequency
+        omega = 2 * np.pi * self.f
+        
+        # Generate waveforms (peak values = RMS × √2)
+        # Primary voltage is the reference (0° phase)
+        v1 = V1_rms * np.sqrt(2) * np.sin(omega * time)
+        
+        # Primary current lags voltage by phase angle φ
+        i1 = I1_rms * np.sqrt(2) * np.sin(omega * time - phi)
+        
+        # Secondary voltage is in phase with primary (ideal transformer)
+        # Uses actual secondary voltage (includes resistive drop)
+        v2 = V2_rms * np.sqrt(2) * np.sin(omega * time)
+        
+        # Secondary current lags secondary voltage by same phase angle
+        # (assuming load is resistive - same power factor on both sides)
+        i2 = I2_rms * np.sqrt(2) * np.sin(omega * time - phi)
+        
+        return {
+            'time': time,
+            'v1': v1,
+            'i1': i1,
+            'v2': v2,
+            'i2': i2,
+        }

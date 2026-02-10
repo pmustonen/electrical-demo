@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from models.transformer import Transformer
 from visualization.power_diagram import PowerDiagram
+from visualization.waveform_diagram import WaveformDiagram
 
 
 class MainWindow:
@@ -13,7 +14,7 @@ class MainWindow:
         """Initialize the main window."""
         self.root = root
         self.root.title("AC Transformer & Reactive Power Demonstration")
-        self.root.geometry("1400x900")
+        self.root.geometry("1400x1200")
         
         # Initialize the transformer (230V:23V, 10:1 ratio)
         self.transformer = Transformer(
@@ -167,7 +168,16 @@ class MainWindow:
         self.q_display.grid(row=3, column=0, sticky=tk.W, padx=5, pady=2)
         
         # === RIGHT PANEL ===
-        self.power_diagram = PowerDiagram(right_panel)
+        # Power diagram on top
+        power_frame = ttk.Frame(right_panel, height=500)
+        power_frame.pack(fill=tk.BOTH, expand=False, pady=(0, 10))
+        power_frame.pack_propagate(False)
+        self.power_diagram = PowerDiagram(power_frame)
+        
+        # Waveform diagram on bottom
+        waveform_frame = ttk.Frame(right_panel)
+        waveform_frame.pack(fill=tk.BOTH, expand=True)
+        self.waveform_diagram = WaveformDiagram(waveform_frame)
     
     def _on_v1_change(self, value):
         """Handle primary voltage change."""
@@ -243,3 +253,13 @@ class MainWindow:
         S = values['apparent_power_secondary']
         pf = values['power_factor']
         self.power_diagram.update(P, Q, S, pf)
+        
+        # Update waveform diagram
+        waveform_data = self.transformer.get_waveform_data(num_cycles=3)
+        self.waveform_diagram.update(
+            waveform_data['time'],
+            waveform_data['v1'],
+            waveform_data['i1'],
+            waveform_data['v2'],
+            waveform_data['i2']
+        )

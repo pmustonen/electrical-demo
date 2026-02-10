@@ -1,5 +1,57 @@
 # Changelog
 
+## [2.1.0] - 2026-02-10 - WAVEFORM VISUALIZATION
+
+### 🌊 New Feature: Time-Domain Waveforms
+
+Added comprehensive voltage and current waveform visualization showing actual AC sinusoidal signals.
+
+### Added
+
+**Waveform Visualization:**
+- ✅ **Primary side waveforms**: V1(t) and I1(t) displayed on left subplot
+- ✅ **Secondary side waveforms**: V2(t) and I2(t) displayed on right subplot
+- ✅ **Time domain display**: Shows 3-4 complete AC cycles
+- ✅ **Dual y-axes**: Voltage and current on separate scales
+- ✅ **Phase relationships**: Clearly shows current lag due to inductance
+- ✅ **Real-time updates**: Waveforms update as parameters change
+- ✅ **Accurate physics**: Peak values = RMS × √2, correct frequency (50/60 Hz)
+
+**New Component:**
+- `src/visualization/waveform_diagram.py` - WaveformDiagram class with matplotlib
+
+**Model Enhancement:**
+- `Transformer.get_waveform_data(num_cycles=3)` - Generates time-domain data
+- Calculates instantaneous voltage and current values
+- Includes proper phase calculations from power factor
+
+**Tests:**
+- 13 new comprehensive waveform tests
+- Validates amplitudes, frequencies, phase relationships
+- Tests step-up, step-down, and different loads
+
+### Changed
+
+**GUI:**
+- Window height increased: 900px → 1200px
+- Right panel now shows two visualizations:
+  1. Power triangle (top)
+  2. Waveform diagrams (bottom)
+- Layout automatically adjusts proportions
+
+**Documentation:**
+- Updated README with waveform features
+- Educational value expanded with AC waveform concepts
+
+### Technical Details
+
+**Physics Implementation:**
+- Primary voltage: V1(t) = V1_rms × √2 × sin(2πft)
+- Primary current: I1(t) = I1_rms × √2 × sin(2πft - φ)
+- Secondary voltage: V2(t) = V2_rms × √2 × sin(2πft)
+- Secondary current: I2(t) = I2_rms × √2 × sin(2πft - φ)
+- Phase angle φ = arccos(power_factor)
+
 ## [2.0.0] - 2026-02-10 - PROPER TRANSFORMER MODEL
 
 ### 🎉 Major Rebuild - Now a Real Transformer!

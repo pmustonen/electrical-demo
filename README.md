@@ -51,12 +51,22 @@ This educational tool provides hands-on learning about electrical transformers:
 - Power to load (W)
 - Reactive power (VAR)
 
-### Visual Power Triangle
-- Real-time vector diagram
+### Real-Time Visualizations
+
+**Power Triangle Diagram:**
+- Vector diagram showing active, reactive, and apparent power
 - Active power (P) - blue arrow
 - Reactive power (Q) - red arrow
 - Apparent power (S) - green arrow
 - Color-coded power factor indicator
+
+**Waveform Diagrams:**
+- **Primary side waveforms:** Voltage (V1) and current (I1) vs. time
+- **Secondary side waveforms:** Voltage (V2) and current (I2) vs. time
+- Shows 3-4 complete AC cycles
+- Demonstrates phase relationships (current lag due to inductance)
+- Dual y-axes for voltage and current
+- Updates in real-time as parameters change
 
 ## Installation
 
@@ -93,7 +103,7 @@ uv run python src/main.py
   - `main.py` - Application entry point
   - `gui/` - Tkinter-based user interface
   - `models/transformer.py` - Real transformer model with voltage transformation
-  - `visualization/` - Power triangle diagrams (matplotlib)
+  - `visualization/` - Power triangle and waveform diagrams (matplotlib)
 - `tests/` - Comprehensive test suite
 - `docs/` - User guide, electrical theory, and examples
 
@@ -103,11 +113,13 @@ This application teaches fundamental concepts:
 
 1. **Voltage Transformation** - How turns ratio affects voltage (V2 = V1/n)
 2. **Current Transformation** - Inverse relationship (I2 = I1 × n)
-3. **Power Conservation** - Input power = output power + losses
-4. **Magnetizing Inductance** - Why transformers draw reactive power
-5. **Efficiency** - How losses affect performance
-6. **Power Factor** - Relationship between active and reactive power
-7. **No-Load vs. Loaded** - How transformers behave under different loads
+3. **AC Waveforms** - Sinusoidal voltage and current in time domain
+4. **Phase Relationships** - How current lags voltage in inductive circuits
+5. **Power Conservation** - Input power = output power + losses
+6. **Magnetizing Inductance** - Why transformers draw reactive power
+7. **Efficiency** - How losses affect performance
+8. **Power Factor** - Relationship between active and reactive power
+9. **No-Load vs. Loaded** - How transformers behave under different loads
 
 Perfect for:
 - Electrical engineering students
