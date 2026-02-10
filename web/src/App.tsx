@@ -13,6 +13,7 @@ function App() {
     powerCalcData,
     updateParam,
     resetParams,
+    loadGridTransformer,
     setPowerCalcSide,
     powerCalcSide,
   } = useTransformer();
@@ -70,6 +71,7 @@ function App() {
         params={params}
         onParamChange={updateParam}
         onReset={resetParams}
+        onLoadGridTransformer={loadGridTransformer}
       />
     </div>
   );

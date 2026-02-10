@@ -16,6 +16,20 @@ const DEFAULT_PARAMS: TransformerParams = {
 };
 
 /**
+ * Grid distribution transformer (20kV/400V, 500kVA typical)
+ * Based on real-world specifications for medium voltage distribution
+ */
+const GRID_TRANSFORMER_PARAMS: TransformerParams = {
+  voltagePrimary: 20000,      // 20 kV primary (medium voltage)
+  frequency: 50,              // 50 Hz (European grid)
+  turnsRatio: 50,             // 50:1 step-down (20kV → 400V)
+  inductanceMag: 110,         // 110 H (typical for 500 kVA @ 11kV, scaled)
+  resistancePrimary: 5,       // 5 Ω (typical for primary winding)
+  resistanceSecondary: 0.02,  // 0.02 Ω (low secondary resistance)
+  resistanceLoad: 0.32,       // 0.32 Ω (500 kVA @ 400V ≈ 1250A → R = 400²/500000)
+};
+
+/**
  * Custom React hook for transformer state management
  * 
  * Manages transformer parameters as React state and provides
@@ -56,6 +70,13 @@ export function useTransformer() {
     setParams(DEFAULT_PARAMS);
   };
 
+  /**
+   * Load grid transformer preset (20kV/400V distribution transformer)
+   */
+  const loadGridTransformer = () => {
+    setParams(GRID_TRANSFORMER_PARAMS);
+  };
+
   return {
     // State
     params,
@@ -71,5 +92,6 @@ export function useTransformer() {
     updateParams,
     setPowerCalcSide,
     resetParams,
+    loadGridTransformer,
   };
 }

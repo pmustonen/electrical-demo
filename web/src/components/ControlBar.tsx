@@ -7,6 +7,7 @@ interface ControlBarProps {
   params: TransformerParams;
   onParamChange: (key: keyof TransformerParams, value: number) => void;
   onReset: () => void;
+  onLoadGridTransformer: () => void;
 }
 
 interface SliderConfig {
@@ -20,16 +21,16 @@ interface SliderConfig {
 }
 
 const SLIDER_CONFIGS: SliderConfig[] = [
-  { key: 'voltagePrimary', label: 'Primary Voltage', symbol: 'V₁', min: 50, max: 500, step: 10, unit: 'V' },
+  { key: 'voltagePrimary', label: 'Primary Voltage', symbol: 'V₁', min: 50, max: 25000, step: 50, unit: 'V' },
   { key: 'frequency', label: 'Frequency', symbol: 'f', min: 50, max: 60, step: 10, unit: 'Hz' },
-  { key: 'turnsRatio', label: 'Turns Ratio', symbol: 'n', min: 0.5, max: 10, step: 0.5, unit: '' },
-  { key: 'inductanceMag', label: 'Magnetizing Inductance', symbol: 'Lₘ', min: 0.1, max: 2, step: 0.1, unit: 'H' },
-  { key: 'resistancePrimary', label: 'Primary Resistance', symbol: 'R₁', min: 0.1, max: 5, step: 0.1, unit: 'Ω' },
-  { key: 'resistanceSecondary', label: 'Secondary Resistance', symbol: 'R₂', min: 0.1, max: 5, step: 0.1, unit: 'Ω' },
-  { key: 'resistanceLoad', label: 'Load Resistance', symbol: 'Rₗ', min: 1, max: 100, step: 1, unit: 'Ω' },
+  { key: 'turnsRatio', label: 'Turns Ratio', symbol: 'n', min: 0.5, max: 100, step: 0.5, unit: '' },
+  { key: 'inductanceMag', label: 'Magnetizing Inductance', symbol: 'Lₘ', min: 0.1, max: 200, step: 0.5, unit: 'H' },
+  { key: 'resistancePrimary', label: 'Primary Resistance', symbol: 'R₁', min: 0.01, max: 20, step: 0.1, unit: 'Ω' },
+  { key: 'resistanceSecondary', label: 'Secondary Resistance', symbol: 'R₂', min: 0.01, max: 5, step: 0.01, unit: 'Ω' },
+  { key: 'resistanceLoad', label: 'Load Resistance', symbol: 'Rₗ', min: 0.1, max: 100, step: 0.1, unit: 'Ω' },
 ];
 
-export function ControlBar({ isExpanded, onToggle, params, onParamChange, onReset }: ControlBarProps) {
+export function ControlBar({ isExpanded, onToggle, params, onParamChange, onReset, onLoadGridTransformer }: ControlBarProps) {
   const [dragValue, setDragValue] = useState<{ key: keyof TransformerParams; value: number } | null>(null);
 
   const handleSliderChange = (key: keyof TransformerParams, value: number) => {
@@ -67,6 +68,13 @@ export function ControlBar({ isExpanded, onToggle, params, onParamChange, onRese
         </div>
         
         <div className="flex items-center gap-3">
+          <button
+            onClick={(e) => { e.stopPropagation(); onLoadGridTransformer(); }}
+            className="px-3 py-1 glass rounded hover:bg-primary-500/20 transition-colors text-xs text-primary-400 border border-primary-500/30"
+            title="Load 20kV/400V grid transformer preset"
+          >
+            Grid Transformer
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); onReset(); }}
             className="px-3 py-1 glass rounded hover:bg-white/10 transition-colors text-xs text-gray-300"
