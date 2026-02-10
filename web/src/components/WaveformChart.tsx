@@ -36,15 +36,28 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
     current: { min: number; max: number };
   } | null>(null);
 
-  // Calculate current data ranges
+  // Calculate current data ranges based on visible data only
   const getCurrentRanges = () => {
-    const allVoltages = [...waveformData.v1, ...waveformData.v2];
-    const allCurrents = [...waveformData.i1, ...waveformData.i2];
+    let voltages: number[] = [];
+    let currents: number[] = [];
     
-    const voltageMin = Math.min(...allVoltages);
-    const voltageMax = Math.max(...allVoltages);
-    const currentMin = Math.min(...allCurrents);
-    const currentMax = Math.max(...allCurrents);
+    // Only include data that's actually being displayed
+    if (viewMode === 'primary') {
+      voltages = waveformData.v1;
+      currents = waveformData.i1;
+    } else if (viewMode === 'secondary') {
+      voltages = waveformData.v2;
+      currents = waveformData.i2;
+    } else {
+      // 'both' mode - include all data
+      voltages = [...waveformData.v1, ...waveformData.v2];
+      currents = [...waveformData.i1, ...waveformData.i2];
+    }
+    
+    const voltageMin = Math.min(...voltages);
+    const voltageMax = Math.max(...voltages);
+    const currentMin = Math.min(...currents);
+    const currentMax = Math.max(...currents);
     
     // Add 10% padding
     const voltagePadding = (voltageMax - voltageMin) * 0.1;
