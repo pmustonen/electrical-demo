@@ -42,12 +42,12 @@ export function ControlBar({ isExpanded, onToggle, params, onParamChange, onRese
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40">
+    <div className="flex-shrink-0 border-t border-slate-700/50">
       {/* Collapsed Bar */}
       <div 
         onClick={onToggle}
-        className="glass-dark border-t border-slate-700/50 px-6 py-3 cursor-pointer 
-                   hover:bg-white/5 transition-colors flex items-center justify-between"
+        className="glass-dark px-6 py-3 cursor-pointer hover:bg-white/5 transition-colors 
+                   flex items-center justify-between"
       >
         <div className="flex items-center gap-4">
           <div className="text-white font-semibold">Parameters</div>
@@ -85,51 +85,49 @@ export function ControlBar({ isExpanded, onToggle, params, onParamChange, onRese
       </div>
 
       {/* Expanded Controls */}
-      <div 
-        className={`glass-dark border-t border-slate-700/50 overflow-hidden transition-all duration-300 ${
-          isExpanded ? 'max-h-64' : 'max-h-0'
-        }`}
-      >
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
-          {SLIDER_CONFIGS.map(config => {
-            const displayValue = dragValue?.key === config.key ? dragValue.value : params[config.key];
-            
-            return (
-              <div key={config.key} className="space-y-1.5">
-                <div className="flex justify-between items-baseline">
-                  <label className="text-xs font-medium text-gray-300">
-                    {config.label}
-                  </label>
-                  <span className="text-sm font-bold text-primary-400 tabular-nums">
-                    {displayValue.toFixed(1)}{config.unit}
-                  </span>
+      {isExpanded && (
+        <div className="glass-dark border-t border-slate-700/50 animate-fade-in">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+            {SLIDER_CONFIGS.map(config => {
+              const displayValue = dragValue?.key === config.key ? dragValue.value : params[config.key];
+              
+              return (
+                <div key={config.key} className="space-y-1.5">
+                  <div className="flex justify-between items-baseline">
+                    <label className="text-xs font-medium text-gray-300">
+                      {config.label}
+                    </label>
+                    <span className="text-sm font-bold text-primary-400 tabular-nums">
+                      {displayValue.toFixed(1)}{config.unit}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={config.min}
+                    max={config.max}
+                    step={config.step}
+                    value={displayValue}
+                    onChange={e => handleSliderChange(config.key, parseFloat(e.target.value))}
+                    onMouseUp={e => handleSliderCommit(config.key, parseFloat((e.target as HTMLInputElement).value))}
+                    onTouchEnd={e => handleSliderCommit(config.key, parseFloat((e.target as HTMLInputElement).value))}
+                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer 
+                               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
+                               [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r 
+                               [&::-webkit-slider-thumb]:from-primary-400 [&::-webkit-slider-thumb]:to-primary-600 
+                               [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-primary-500/50
+                               [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform
+                               [&::-webkit-slider-thumb]:hover:scale-110"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>{config.min}</span>
+                    <span>{config.max}</span>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min={config.min}
-                  max={config.max}
-                  step={config.step}
-                  value={displayValue}
-                  onChange={e => handleSliderChange(config.key, parseFloat(e.target.value))}
-                  onMouseUp={e => handleSliderCommit(config.key, parseFloat((e.target as HTMLInputElement).value))}
-                  onTouchEnd={e => handleSliderCommit(config.key, parseFloat((e.target as HTMLInputElement).value))}
-                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer 
-                             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
-                             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r 
-                             [&::-webkit-slider-thumb]:from-primary-400 [&::-webkit-slider-thumb]:to-primary-600 
-                             [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-primary-500/50
-                             [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform
-                             [&::-webkit-slider-thumb]:hover:scale-110"
-                />
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>{config.min}</span>
-                  <span>{config.max}</span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
