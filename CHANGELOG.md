@@ -1,5 +1,73 @@
 # Changelog
 
+## [2.2.0] - 2026-02-10 - POWER CALCULATION VISUALIZATION
+
+### 🔢 New Feature: Mathematical Power Calculation
+
+Added visualization showing how electrical powers (P, Q, S) are mathematically calculated from voltage and current waveforms through integration.
+
+### Added
+
+**Power Calculation Visualization:**
+- ✅ **Instantaneous power**: p(t) = v(t) × i(t) plotted over time
+- ✅ **Positive power shading**: Green area shows energy flowing to load
+- ✅ **Negative power shading**: Orange area shows energy returned from inductor
+- ✅ **Average power line**: Horizontal line showing P = average[p(t)]
+- ✅ **Side selector**: User can choose Primary or Secondary side
+- ✅ **Power annotations**: Displays P, Q, S values with formulas
+- ✅ **Demonstrates**: Power oscillation at 2× line frequency
+
+**New Components:**
+- `src/visualization/power_calculation_diagram.py` - PowerCalculationDiagram class
+- Two-subplot layout: waveforms (top), power calculation (bottom)
+
+**Model Enhancement:**
+- `Transformer.get_power_calculation_data(side, num_cycles)` method
+- Calculates instantaneous power: p(t) = v(t) × i(t)
+- Computes time-averaged power (P) from p(t)
+- Returns comprehensive power metrics (P, Q, S, φ, pf)
+
+**Tests:**
+- 14 new comprehensive power calculation tests
+- Validates p(t) = v(t) × i(t) pointwise
+- Verifies average[p(t)] = P
+- Tests power triangle relationship P² + Q² = S²
+- Validates resistive vs inductive load behavior
+
+### Changed
+
+**GUI:**
+- Window height increased: 1200px → 1500px
+- Right panel now shows THREE visualizations:
+  1. Power triangle (top, 400px)
+  2. Waveform diagrams (middle, 350px)
+  3. Power calculation (bottom, expandable)
+- Added dropdown selector for power calculation side
+
+**Power Triangle Fix:**
+- **FIXED**: Power triangle now uses consistent primary side values
+- Previously showed mixed values (load power + magnetizing Q)
+- Now shows proper power triangle: P, Q, S from primary side
+- Values now match power calculation diagram
+
+**Documentation:**
+- Updated README with power calculation features
+- Educational value expanded with power integration concepts
+
+### Technical Details
+
+**Mathematics:**
+- Instantaneous power: p(t) = v(t) × i(t)
+- Active power: P = (1/T) ∫₀ᵀ p(t) dt = average[p(t)]
+- Reactive power: Q = S × sin(φ)
+- Power oscillates at 2f (double line frequency)
+
+**Educational Insights:**
+- **Resistive load (φ=0°)**: p(t) always positive, oscillates 0→2P
+- **Inductive load (φ>0°)**: p(t) oscillates around P, goes negative
+- **Pure reactive (φ=90°)**: p(t) oscillates symmetrically around zero
+- Negative power = energy temporarily stored in inductor returns to source
+
 ## [2.1.0] - 2026-02-10 - WAVEFORM VISUALIZATION
 
 ### 🌊 New Feature: Time-Domain Waveforms

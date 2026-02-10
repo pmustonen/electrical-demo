@@ -68,6 +68,16 @@ This educational tool provides hands-on learning about electrical transformers:
 - Dual y-axes for voltage and current
 - Updates in real-time as parameters change
 
+**Power Calculation Diagram:**
+- **Mathematical visualization** of how powers are calculated from waveforms
+- Shows instantaneous power: **p(t) = v(t) × i(t)**
+- **Green shading:** Positive power (energy to load)
+- **Orange shading:** Negative power (energy returned from inductor)
+- **Horizontal line:** Average power P (real power)
+- Displays P, Q, S values with formulas
+- User can select Primary or Secondary side
+- Demonstrates power oscillation at 2× line frequency
+
 ## Installation
 
 This project uses [uv](https://docs.astral.sh/uv/) for fast, reliable package management.

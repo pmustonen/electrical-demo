@@ -317,3 +317,76 @@ class Transformer:
             'v2': v2,
             'i2': i2,
         }
+    
+    def get_power_calculation_data(self, side='primary', num_cycles=3, points_per_cycle=333):
+        """Generate power calculation data showing p(t) = v(t) × i(t).
+        
+        This method calculates instantaneous power and shows how integration
+        produces real power P and reactive power Q.
+        
+        Args:
+            side: Which side to calculate ('primary' or 'secondary')
+            num_cycles: Number of AC cycles to generate (default: 3)
+            points_per_cycle: Number of data points per cycle (default: 333)
+        
+        Returns:
+            dict: Dictionary containing:
+                - 'time': Time array in seconds
+                - 'voltage': Voltage waveform v(t)
+                - 'current': Current waveform i(t)
+                - 'power_instantaneous': Instantaneous power p(t) = v(t) × i(t)
+                - 'power_active': Average power P (real power)
+                - 'power_reactive': Reactive power Q
+                - 'power_apparent': Apparent power S
+                - 'power_factor': Power factor cos(φ)
+                - 'phase_angle': Phase angle φ in radians
+        """
+        # Get waveform data
+        waveform_data = self.get_waveform_data(num_cycles, points_per_cycle)
+        time = waveform_data['time']
+        
+        # Select voltage and current based on side
+        if side.lower() == 'primary':
+            voltage = waveform_data['v1']
+            current = waveform_data['i1']
+        elif side.lower() == 'secondary':
+            voltage = waveform_data['v2']
+            current = waveform_data['i2']
+        else:
+            raise ValueError(f"Invalid side '{side}'. Must be 'primary' or 'secondary'")
+        
+        # Calculate instantaneous power: p(t) = v(t) × i(t)
+        power_instantaneous = voltage * current
+        
+        # Get RMS values and power metrics from transformer calculations
+        values = self.get_all_values()
+        pf = values['power_factor']
+        
+        if side.lower() == 'primary':
+            V_rms = values['voltage_primary']
+            I_rms = values['current_primary']
+            S = values['apparent_power_primary']
+        else:  # secondary
+            V_rms = values['voltage_secondary_actual']
+            I_rms = values['current_secondary']
+            S = values['apparent_power_secondary']
+        
+        # Calculate powers
+        # Active power (average of instantaneous power)
+        P = np.mean(power_instantaneous)
+        
+        # From power triangle: P = S × cos(φ), Q = S × sin(φ)
+        phi = np.arccos(np.clip(pf, -1.0, 1.0))
+        Q = S * np.sin(phi)
+        
+        return {
+            'time': time,
+            'voltage': voltage,
+            'current': current,
+            'power_instantaneous': power_instantaneous,
+            'power_active': P,
+            'power_reactive': Q,
+            'power_apparent': S,
+            'power_factor': pf,
+            'phase_angle': phi,
+        }

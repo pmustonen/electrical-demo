@@ -5,6 +5,7 @@ from tkinter import ttk
 from models.transformer import Transformer
 from visualization.power_diagram import PowerDiagram
 from visualization.waveform_diagram import WaveformDiagram
+from visualization.power_calculation_diagram import PowerCalculationDiagram
 
 
 class MainWindow:
@@ -14,7 +15,7 @@ class MainWindow:
         """Initialize the main window."""
         self.root = root
         self.root.title("AC Transformer & Reactive Power Demonstration")
-        self.root.geometry("1400x1200")
+        self.root.geometry("1400x1400")  # Reduced to fit most screens
         
         # Initialize the transformer (230V:23V, 10:1 ratio)
         self.transformer = Transformer(
@@ -168,16 +169,44 @@ class MainWindow:
         self.q_display.grid(row=3, column=0, sticky=tk.W, padx=5, pady=2)
         
         # === RIGHT PANEL ===
-        # Power diagram on top
-        power_frame = ttk.Frame(right_panel, height=500)
+        # Power diagram on top - compact
+        power_frame = ttk.Frame(right_panel, height=280)
         power_frame.pack(fill=tk.BOTH, expand=False, pady=(0, 10))
         power_frame.pack_propagate(False)
         self.power_diagram = PowerDiagram(power_frame)
         
-        # Waveform diagram on bottom
-        waveform_frame = ttk.Frame(right_panel)
-        waveform_frame.pack(fill=tk.BOTH, expand=True)
+        # Waveform diagram in middle - compact
+        waveform_frame = ttk.Frame(right_panel, height=250)
+        waveform_frame.pack(fill=tk.BOTH, expand=False, pady=(0, 10))
+        waveform_frame.pack_propagate(False)
         self.waveform_diagram = WaveformDiagram(waveform_frame)
+        
+        # Power calculation diagram on bottom - gets most space!
+        power_calc_container = ttk.Frame(right_panel, height=750)
+        power_calc_container.pack(fill=tk.BOTH, expand=False)
+        power_calc_container.pack_propagate(False)
+        
+        # Add selector for Primary/Secondary at top of power calculation
+        selector_frame = ttk.Frame(power_calc_container)
+        selector_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        ttk.Label(selector_frame, text="Show power calculation for:", font=("", 10, "bold")).pack(side=tk.LEFT, padx=5)
+        
+        self.power_side_var = tk.StringVar(value="primary")
+        side_selector = ttk.Combobox(
+            selector_frame,
+            textvariable=self.power_side_var,
+            values=["primary", "secondary"],
+            state="readonly",
+            width=12
+        )
+        side_selector.pack(side=tk.LEFT, padx=5)
+        side_selector.bind("<<ComboboxSelected>>", self._on_power_side_change)
+        
+        # Power calculation diagram - let it use all the container space
+        power_calc_frame = ttk.Frame(power_calc_container)
+        power_calc_frame.pack(fill=tk.BOTH, expand=True)
+        self.power_calc_diagram = PowerCalculationDiagram(power_calc_frame)
     
     def _on_v1_change(self, value):
         """Handle primary voltage change."""
@@ -247,12 +276,20 @@ class MainWindow:
         self.pload_display.config(text=f"Power to Load: {values['power_load']:.2f} W")
         self.q_display.config(text=f"Reactive Power: {values['reactive_power_magnetizing']:.2f} VAR")
         
-        # Update power diagram (use secondary side values)
-        P = values['power_load']
-        Q = values['reactive_power_magnetizing']
-        S = values['apparent_power_secondary']
+        # Update power diagram - use PRIMARY side values to match power calculation
+        # Calculate P and Q from primary side for consistency
+        V1 = values['voltage_primary']
+        I1 = values['current_primary']
+        S1 = values['apparent_power_primary']
         pf = values['power_factor']
-        self.power_diagram.update(P, Q, S, pf)
+        
+        # Calculate P and Q from S and power factor
+        import math
+        phi = math.acos(max(-1.0, min(1.0, pf)))  # Clip to avoid numerical errors
+        P = S1 * pf  # Active power
+        Q = S1 * math.sin(phi)  # Reactive power
+        
+        self.power_diagram.update(P, Q, S1, pf)
         
         # Update waveform diagram
         waveform_data = self.transformer.get_waveform_data(num_cycles=3)
@@ -262,4 +299,31 @@ class MainWindow:
             waveform_data['i1'],
             waveform_data['v2'],
             waveform_data['i2']
+        )
+        
+        # Update power calculation diagram
+        self._update_power_calculation()
+    
+    def _on_power_side_change(self, event=None):
+        """Handle power calculation side selection change."""
+        self._update_power_calculation()
+    
+    def _update_power_calculation(self):
+        """Update the power calculation diagram based on selected side."""
+        side = self.power_side_var.get()
+        side_name = side.capitalize()
+        
+        # Get power calculation data
+        power_data = self.transformer.get_power_calculation_data(side=side, num_cycles=3)
+        
+        # Update diagram
+        self.power_calc_diagram.update(
+            power_data['time'],
+            power_data['voltage'],
+            power_data['current'],
+            power_data['power_instantaneous'],
+            power_data['power_active'],
+            power_data['power_reactive'],
+            power_data['power_apparent'],
+            side_name
         )
