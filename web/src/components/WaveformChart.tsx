@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -30,6 +30,46 @@ type ViewMode = 'primary' | 'secondary' | 'both';
 
 export function WaveformChart({ waveformData }: WaveformChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('both');
+  const [axesFrozen, setAxesFrozen] = useState(false);
+  const frozenRangesRef = useRef<{
+    voltage: { min: number; max: number };
+    current: { min: number; max: number };
+  } | null>(null);
+
+  // Calculate current data ranges
+  const getCurrentRanges = () => {
+    const allVoltages = [...waveformData.v1, ...waveformData.v2];
+    const allCurrents = [...waveformData.i1, ...waveformData.i2];
+    
+    const voltageMin = Math.min(...allVoltages);
+    const voltageMax = Math.max(...allVoltages);
+    const currentMin = Math.min(...allCurrents);
+    const currentMax = Math.max(...allCurrents);
+    
+    // Add 10% padding
+    const voltagePadding = (voltageMax - voltageMin) * 0.1;
+    const currentPadding = (currentMax - currentMin) * 0.1;
+    
+    return {
+      voltage: { 
+        min: voltageMin - voltagePadding, 
+        max: voltageMax + voltagePadding 
+      },
+      current: { 
+        min: currentMin - currentPadding, 
+        max: currentMax + currentPadding 
+      },
+    };
+  };
+
+  // Update frozen ranges when freeze is toggled on
+  useEffect(() => {
+    if (axesFrozen && !frozenRangesRef.current) {
+      frozenRangesRef.current = getCurrentRanges();
+    } else if (!axesFrozen) {
+      frozenRangesRef.current = null;
+    }
+  }, [axesFrozen]);
 
   const timeMs = waveformData.time.map(t => (t * 1000).toFixed(1));
 
@@ -96,6 +136,11 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
     datasets: getDatasets(),
   };
 
+  // Get axis ranges (frozen or auto-scaling)
+  const ranges = axesFrozen && frozenRangesRef.current 
+    ? frozenRangesRef.current 
+    : getCurrentRanges();
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -146,6 +191,8 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
       'y-voltage': {
         type: 'linear' as const,
         position: 'left' as const,
+        min: ranges.voltage.min,
+        max: ranges.voltage.max,
         title: {
           display: true,
           text: 'Voltage (V)',
@@ -168,6 +215,8 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
       'y-current': {
         type: 'linear' as const,
         position: 'right' as const,
+        min: ranges.current.min,
+        max: ranges.current.max,
         title: {
           display: true,
           text: 'Current (A)',
@@ -195,20 +244,36 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-white">Voltage & Current Waveforms</h2>
         
-        <div className="flex gap-1 glass rounded-lg p-1">
-          {(['primary', 'secondary', 'both'] as ViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
-                ${viewMode === mode 
-                  ? 'bg-primary-500 text-white shadow-lg' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-            >
-              {mode === 'both' ? 'Both' : mode === 'primary' ? 'Primary' : 'Secondary'}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          {/* Freeze Toggle */}
+          <button
+            onClick={() => setAxesFrozen(!axesFrozen)}
+            className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+              ${axesFrozen 
+                ? 'bg-accent-orange/20 text-accent-orange border border-accent-orange/50' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            title={axesFrozen ? 'Unfreeze axes' : 'Freeze axes'}
+          >
+            {axesFrozen ? '🔒' : '🔓'}
+          </button>
+
+          {/* View Mode Toggle */}
+          <div className="flex gap-1 glass rounded-lg p-1">
+            {(['primary', 'secondary', 'both'] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+                  ${viewMode === mode 
+                    ? 'bg-primary-500 text-white shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+              >
+                {mode === 'both' ? 'Both' : mode === 'primary' ? 'Primary' : 'Secondary'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -220,6 +285,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         {viewMode === 'both' && 'Solid lines: Primary • Dashed lines: Secondary'}
         {viewMode === 'primary' && 'Showing primary side waveforms'}
         {viewMode === 'secondary' && 'Showing secondary side waveforms'}
+        {axesFrozen && ' • 🔒 Axes frozen'}
       </div>
     </div>
   );
