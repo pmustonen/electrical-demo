@@ -186,18 +186,19 @@ export class Transformer {
     // Calculate instantaneous power p(t) = v(t) × i(t)
     const powerInstantaneous = voltage.map((v, i) => v * current[i]);
 
-    // Select power values based on side
-    const powerActive = side === 'primary' 
-      ? values.powerActivePrimary 
-      : values.powerActiveSecondary;
+    // Active power = average of instantaneous power
+    const powerActive = powerInstantaneous.reduce((sum, p) => sum + p, 0) / powerInstantaneous.length;
     
-    const powerReactive = side === 'primary'
-      ? values.powerReactivePrimary
-      : values.powerReactiveSecondary;
-    
+    // Apparent power and power factor
     const powerApparent = side === 'primary'
       ? values.powerApparentPrimary
       : values.powerApparentSecondary;
+    
+    const powerFactor = values.powerFactor;
+    
+    // Reactive power from power triangle: Q = S × sin(φ)
+    const phaseAngle = Math.acos(Math.max(-1, Math.min(1, powerFactor)));
+    const powerReactive = powerApparent * Math.sin(phaseAngle);
 
     return {
       time: waveforms.time,
@@ -207,7 +208,7 @@ export class Transformer {
       powerActive,
       powerReactive,
       powerApparent,
-      powerFactor: values.powerFactor,
+      powerFactor,
     };
   }
 }
