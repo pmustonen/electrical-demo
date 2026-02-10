@@ -1,73 +1,97 @@
-# React + TypeScript + Vite
+# AC Transformer Education - Web Version
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interactive browser-based visualization of AC transformer behavior using React and TypeScript.
 
-Currently, two official plugins are available:
+## 🚀 Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open http://localhost:5173 in your browser.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 📦 Build for Production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npm run preview
 ```
+
+## 🎯 Features
+
+### Three Interactive Visualizations:
+
+1. **Power Triangle**
+   - Vector representation of P, Q, S
+   - Real-time updates as parameters change
+   - Color-coded for clarity
+
+2. **Voltage & Current Waveforms**
+   - Primary and secondary side waveforms
+   - Dual y-axes (voltage/current)
+   - Shows 3-4 AC cycles
+   - Phase relationship visualization
+
+3. **Power Calculation Diagram**
+   - Instantaneous power p(t) = v(t) × i(t)
+   - Shaded areas showing energy flow
+   - Demonstrates P, Q, S derivation
+   - Selectable primary/secondary side
+
+### Control Panel:
+- 7 adjustable parameters via sliders
+- Real-time visualization updates
+- Default values matching educational scenarios
+
+## 🛠️ Technology Stack
+
+- **React 19** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **Chart.js** - Interactive charts
+- **Tailwind CSS** - Styling
+
+## 📐 Physics Model
+
+The transformer model implements:
+- Voltage transformation: V₂ = V₁/n
+- Current calculations with magnetizing current
+- Power analysis (active, reactive, apparent)
+- Time-domain waveform generation
+- Instantaneous power calculations
+
+All calculations match the Python desktop version exactly.
+
+## 🎓 Educational Value
+
+Perfect for:
+- Electrical engineering students
+- Understanding AC power concepts
+- Visualizing transformer behavior
+- Learning about reactive power
+- Phase relationships in AC circuits
+
+## 📁 Project Structure
+
+```
+web/
+├── src/
+│   ├── models/          # Transformer physics
+│   ├── components/      # React components
+│   ├── hooks/           # Custom React hooks
+│   ├── types/           # TypeScript definitions
+│   ├── App.tsx          # Main application
+│   └── main.tsx         # Entry point
+├── public/              # Static assets
+└── package.json         # Dependencies
+```
+
+## 🔗 Related
+
+- [Python Desktop Version](../python/) - tkinter GUI with matplotlib
+- [Main Repository](../) - Overview of both versions
+
+## 📄 License
+
+MIT - Educational use encouraged!
