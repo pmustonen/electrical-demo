@@ -30,7 +30,7 @@ interface WaveformChartProps {
 type ViewMode = 'primary' | 'secondary' | 'both';
 
 export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('both');
+  const [viewMode, setViewMode] = useState<ViewMode>('primary');
   const [axesFrozen, setAxesFrozen] = useState(false);
   const [showRMS, setShowRMS] = useState(true);
   const [showPhaseShift, setShowPhaseShift] = useState(false);
