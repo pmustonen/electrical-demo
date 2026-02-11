@@ -27,8 +27,7 @@ const SLIDER_CONFIGS: SliderConfig[] = [
   { key: 'frequency', label: 'Frequency', symbol: 'f', min: 50, max: 60, step: 10, unit: 'Hz' },
   { key: 'turnsRatio', label: 'Turns Ratio', symbol: 'n', min: 0.5, max: 100, step: 0.5, unit: '' },
   { key: 'inductanceMag', label: 'Magnetizing Inductance', symbol: 'Lₘ', min: 0.1, max: 200, step: 0.5, unit: 'H' },
-  { key: 'resistancePrimary', label: 'Primary Resistance', symbol: 'R₁', min: 0.01, max: 20, step: 0.1, unit: 'Ω' },
-  { key: 'resistanceSecondary', label: 'Secondary Resistance', symbol: 'R₂', min: 0.01, max: 5, step: 0.01, unit: 'Ω' },
+  // resistancePrimary and resistanceSecondary hidden - set by presets or defaults
   { key: 'resistanceLoad', label: 'Load Resistance', symbol: 'Rₗ', min: 0.1, max: 100, step: 0.1, unit: 'Ω' },
 ];
 
