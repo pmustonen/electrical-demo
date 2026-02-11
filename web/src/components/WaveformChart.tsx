@@ -39,57 +39,6 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
     current: { min: number; max: number };
   } | null>(null);
 
-  // Find one complete cycle for voltage and current waveforms to highlight
-  const getHighlightCycles = () => {
-    const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
-    const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
-    
-    // Find first positive zero crossing for voltage
-    let vStart = -1;
-    for (let i = 1; i < voltages.length; i++) {
-      if (voltages[i-1] < 0 && voltages[i] >= 0) {
-        vStart = i;
-        break;
-      }
-    }
-    
-    // Find second positive zero crossing for voltage (one complete cycle)
-    let vEnd = -1;
-    if (vStart !== -1) {
-      for (let i = vStart + 1; i < voltages.length; i++) {
-        if (voltages[i-1] < 0 && voltages[i] >= 0) {
-          vEnd = i;
-          break;
-        }
-      }
-    }
-    
-    // Find first positive zero crossing for current (from the same start region)
-    let iStart = -1;
-    for (let i = 1; i < currents.length; i++) {
-      if (currents[i-1] < 0 && currents[i] >= 0) {
-        iStart = i;
-        break;
-      }
-    }
-    
-    // Find second positive zero crossing for current (one complete cycle)
-    let iEnd = -1;
-    if (iStart !== -1) {
-      for (let i = iStart + 1; i < currents.length; i++) {
-        if (currents[i-1] < 0 && currents[i] >= 0) {
-          iEnd = i;
-          break;
-        }
-      }
-    }
-    
-    return {
-      voltage: { start: vStart, end: vEnd },
-      current: { start: iStart, end: iEnd },
-    };
-  };
-
   // Calculate RMS values (Peak / √2)
   const getRMSValues = () => {
     const v1Peak = Math.max(...waveformData.v1.map(Math.abs));
@@ -271,50 +220,6 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
             tension: 0,
           }
         );
-      }
-    }
-    
-    // Add highlighted cycle markers (only when not in 'both' mode and showPhaseShift is enabled)
-    if (showPhaseShift && viewMode !== 'both') {
-      const cycles = getHighlightCycles();
-      
-      if (cycles.voltage.start !== -1 && cycles.voltage.end !== -1 &&
-          cycles.current.start !== -1 && cycles.current.end !== -1) {
-        
-        const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
-        const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
-        const voltageColor = viewMode === 'secondary' ? '#8b5cf6' : '#6366f1';
-        const currentColor = viewMode === 'secondary' ? '#f59e0b' : '#10b981';
-        
-        // Highlighted voltage cycle (thicker, brighter)
-        const vHighlightData = waveformData.time.map((_t, idx) => 
-          idx >= cycles.voltage.start && idx <= cycles.voltage.end ? voltages[idx] : null
-        );
-        datasets.push({
-          label: 'V cycle (φ ref)',
-          data: vHighlightData,
-          borderColor: voltageColor,
-          backgroundColor: 'transparent',
-          borderWidth: 4,
-          pointRadius: 0,
-          yAxisID: 'y-voltage',
-          tension: 0.4,
-        });
-        
-        // Highlighted current cycle (thicker, brighter)
-        const iHighlightData = waveformData.time.map((_t, idx) => 
-          idx >= cycles.current.start && idx <= cycles.current.end ? currents[idx] : null
-        );
-        datasets.push({
-          label: 'I cycle (φ ref)',
-          data: iHighlightData,
-          borderColor: currentColor,
-          backgroundColor: 'transparent',
-          borderWidth: 4,
-          pointRadius: 0,
-          yAxisID: 'y-current',
-          tension: 0.4,
-        });
       }
     }
     
