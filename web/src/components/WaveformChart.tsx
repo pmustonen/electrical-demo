@@ -39,30 +39,55 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
     current: { min: number; max: number };
   } | null>(null);
 
-  // Find zero crossing indices for visual markers
-  const getZeroCrossingIndices = () => {
+  // Find one complete cycle for voltage and current waveforms to highlight
+  const getHighlightCycles = () => {
     const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
     const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
     
-    // Find first positive zero crossing for voltage (going from negative to positive)
-    let vZeroCrossing = -1;
+    // Find first positive zero crossing for voltage
+    let vStart = -1;
     for (let i = 1; i < voltages.length; i++) {
       if (voltages[i-1] < 0 && voltages[i] >= 0) {
-        vZeroCrossing = i;
+        vStart = i;
         break;
       }
     }
     
-    // Find first positive zero crossing for current
-    let iZeroCrossing = -1;
+    // Find second positive zero crossing for voltage (one complete cycle)
+    let vEnd = -1;
+    if (vStart !== -1) {
+      for (let i = vStart + 1; i < voltages.length; i++) {
+        if (voltages[i-1] < 0 && voltages[i] >= 0) {
+          vEnd = i;
+          break;
+        }
+      }
+    }
+    
+    // Find first positive zero crossing for current (from the same start region)
+    let iStart = -1;
     for (let i = 1; i < currents.length; i++) {
       if (currents[i-1] < 0 && currents[i] >= 0) {
-        iZeroCrossing = i;
+        iStart = i;
         break;
       }
     }
     
-    return { vIndex: vZeroCrossing, iIndex: iZeroCrossing };
+    // Find second positive zero crossing for current (one complete cycle)
+    let iEnd = -1;
+    if (iStart !== -1) {
+      for (let i = iStart + 1; i < currents.length; i++) {
+        if (currents[i-1] < 0 && currents[i] >= 0) {
+          iEnd = i;
+          break;
+        }
+      }
+    }
+    
+    return {
+      voltage: { start: vStart, end: vEnd },
+      current: { start: iStart, end: iEnd },
+    };
   };
 
   // Calculate RMS values (Peak / √2)
@@ -249,45 +274,46 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
       }
     }
     
-    // Add phase shift markers (only when not in 'both' mode and showPhaseShift is enabled)
+    // Add highlighted cycle markers (only when not in 'both' mode and showPhaseShift is enabled)
     if (showPhaseShift && viewMode !== 'both') {
-      const crossings = getZeroCrossingIndices();
+      const cycles = getHighlightCycles();
       
-      if (crossings.vIndex !== -1 && crossings.iIndex !== -1) {
-        // Create vertical line effect using scatter points
+      if (cycles.voltage.start !== -1 && cycles.voltage.end !== -1 &&
+          cycles.current.start !== -1 && cycles.current.end !== -1) {
+        
+        const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
+        const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
         const voltageColor = viewMode === 'secondary' ? '#8b5cf6' : '#6366f1';
         const currentColor = viewMode === 'secondary' ? '#f59e0b' : '#10b981';
         
-        // Voltage zero-crossing marker
-        const vMarkerData = waveformData.time.map((_t, idx) => 
-          idx === crossings.vIndex ? 0 : null
+        // Highlighted voltage cycle (thicker, brighter)
+        const vHighlightData = waveformData.time.map((_t, idx) => 
+          idx >= cycles.voltage.start && idx <= cycles.voltage.end ? voltages[idx] : null
         );
         datasets.push({
-          label: 'V zero crossing',
-          data: vMarkerData,
+          label: 'V cycle (φ ref)',
+          data: vHighlightData,
           borderColor: voltageColor,
-          backgroundColor: voltageColor,
-          borderWidth: 3,
-          pointRadius: 6,
-          pointStyle: 'rectRot' as const,
+          backgroundColor: 'transparent',
+          borderWidth: 4,
+          pointRadius: 0,
           yAxisID: 'y-voltage',
-          showLine: false,
+          tension: 0.4,
         });
         
-        // Current zero-crossing marker  
-        const iMarkerData = waveformData.time.map((_t, idx) => 
-          idx === crossings.iIndex ? 0 : null
+        // Highlighted current cycle (thicker, brighter)
+        const iHighlightData = waveformData.time.map((_t, idx) => 
+          idx >= cycles.current.start && idx <= cycles.current.end ? currents[idx] : null
         );
         datasets.push({
-          label: 'I zero crossing',
-          data: iMarkerData,
+          label: 'I cycle (φ ref)',
+          data: iHighlightData,
           borderColor: currentColor,
-          backgroundColor: currentColor,
-          borderWidth: 3,
-          pointRadius: 6,
-          pointStyle: 'rectRot' as const,
+          backgroundColor: 'transparent',
+          borderWidth: 4,
+          pointRadius: 0,
           yAxisID: 'y-current',
-          showLine: false,
+          tension: 0.4,
         });
       }
     }
