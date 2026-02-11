@@ -1,6 +1,9 @@
 /**
- * TypeScript type definitions for AC Transformer Education App
+ * TypeScript type definitions for Electrical Machines Education App
  */
+
+// Machine abstraction types
+export * from './machine';
 
 /**
  * Input parameters for the transformer
