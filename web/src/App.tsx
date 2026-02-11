@@ -54,7 +54,7 @@ function App() {
 
           {/* Waveforms */}
           <div className="animate-scale-in min-h-0" style={{ animationDelay: '50ms' }}>
-            <WaveformChart waveformData={waveformData} />
+            <WaveformChart waveformData={waveformData} phaseAngle={values.phaseAngle} />
           </div>
 
           {/* Power Calculation */}

@@ -24,11 +24,12 @@ ChartJS.register(
 
 interface WaveformChartProps {
   waveformData: WaveformData;
+  phaseAngle: number; // Phase angle in radians
 }
 
 type ViewMode = 'primary' | 'secondary' | 'both';
 
-export function WaveformChart({ waveformData }: WaveformChartProps) {
+export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('both');
   const [axesFrozen, setAxesFrozen] = useState(false);
   const [showRMS, setShowRMS] = useState(true);
@@ -38,11 +39,10 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
     current: { min: number; max: number };
   } | null>(null);
 
-  // Calculate phase shift (time delay between voltage and current zero crossings)
-  const getPhaseShift = () => {
+  // Find zero crossing indices for visual markers
+  const getZeroCrossingIndices = () => {
     const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
     const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
-    const time = waveformData.time;
     
     // Find first positive zero crossing for voltage (going from negative to positive)
     let vZeroCrossing = -1;
@@ -62,27 +62,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
       }
     }
     
-    if (vZeroCrossing === -1 || iZeroCrossing === -1) {
-      return { timeDelay: 0, angleDelay: 0, vIndex: -1, iIndex: -1 };
-    }
-    
-    // Calculate time delay
-    const timeDelay = Math.abs(time[iZeroCrossing] - time[vZeroCrossing]);
-    
-    // Calculate period from frequency (approximate from time array)
-    const period = (time[time.length - 1] - time[0]) / 3; // 3 cycles in data
-    
-    // Convert to angle in degrees
-    const angleDelay = (timeDelay / period) * 360;
-    
-    return {
-      timeDelay,
-      angleDelay,
-      vIndex: vZeroCrossing,
-      iIndex: iZeroCrossing,
-      vTime: time[vZeroCrossing],
-      iTime: time[iZeroCrossing],
-    };
+    return { vIndex: vZeroCrossing, iIndex: iZeroCrossing };
   };
 
   // Calculate RMS values (Peak / √2)
@@ -271,16 +251,16 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
     
     // Add phase shift markers (only when not in 'both' mode and showPhaseShift is enabled)
     if (showPhaseShift && viewMode !== 'both') {
-      const phaseInfo = getPhaseShift();
+      const crossings = getZeroCrossingIndices();
       
-      if (phaseInfo.vIndex !== -1 && phaseInfo.iIndex !== -1) {
+      if (crossings.vIndex !== -1 && crossings.iIndex !== -1) {
         // Create vertical line effect using scatter points
         const voltageColor = viewMode === 'secondary' ? '#8b5cf6' : '#6366f1';
         const currentColor = viewMode === 'secondary' ? '#f59e0b' : '#10b981';
         
         // Voltage zero-crossing marker
         const vMarkerData = waveformData.time.map((_t, idx) => 
-          idx === phaseInfo.vIndex ? 0 : null
+          idx === crossings.vIndex ? 0 : null
         );
         datasets.push({
           label: 'V zero crossing',
@@ -296,7 +276,7 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         
         // Current zero-crossing marker  
         const iMarkerData = waveformData.time.map((_t, idx) => 
-          idx === phaseInfo.iIndex ? 0 : null
+          idx === crossings.iIndex ? 0 : null
         );
         datasets.push({
           label: 'I zero crossing',
@@ -503,12 +483,9 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         {viewMode === 'primary' && 'Showing primary side waveforms'}
         {viewMode === 'secondary' && 'Showing secondary side waveforms'}
         {showRMS && ' • RMS values shown'}
-        {showPhaseShift && viewMode !== 'both' && (() => {
-          const phaseInfo = getPhaseShift();
-          return phaseInfo.vIndex !== -1 
-            ? ` • Phase shift: ${phaseInfo.angleDelay.toFixed(1)}°` 
-            : '';
-        })()}
+        {showPhaseShift && viewMode !== 'both' && (
+          ` • Phase shift: ${(phaseAngle * 180 / Math.PI).toFixed(1)}°`
+        )}
         {axesFrozen && ' • 🔒 Axes frozen'}
       </div>
     </div>
