@@ -43,6 +43,7 @@ export class Transformer {
       frequency: f,
       turnsRatio: n,
       inductanceMag: Lmag,
+      resistancePrimary: R1,
       resistanceSecondary: R2,
       resistanceLoad: Rload,
     } = this.params;
@@ -53,27 +54,44 @@ export class Transformer {
     // Magnetizing reactance
     const Xmag = omega * Lmag;
 
-    // Secondary voltage (ideal transformation)
-    const V2 = V1 / n;
-
-    // Load current
-    const Iload = V2 / (R2 + Rload);
-
-    // Secondary current (same as load in simple model)
-    const I2 = Iload;
-
-    // Current reflected to primary
-    const I2_reflected = I2 / n;
-
-    // Magnetizing voltage (approximately V1 for small R1)
-    const Vmag = V1;
-
-    // Magnetizing current
-    const Imag = Vmag / Xmag;
-
-    // Total primary current (phasor sum, but simplified for reactive + resistive)
-    // I1 = I2_reflected + Imag (phasor addition)
-    const I1 = Math.sqrt(I2_reflected ** 2 + Imag ** 2);
+    // Iterative solution needed since I1 affects Vmag which affects Imag which affects I1
+    // Start with approximation
+    let I1 = 0.1; // Initial guess
+    let I2_reflected = 0;
+    let Imag = 0;
+    let Vmag = V1;
+    let V2 = V1 / n;
+    let I2 = 0;
+    
+    // Iterate to converge (usually 3-5 iterations enough)
+    for (let iter = 0; iter < 10; iter++) {
+      // Magnetizing voltage after R1 drop
+      Vmag = V1 - I1 * R1;
+      
+      // Secondary voltage (ideal transformation from magnetizing voltage)
+      V2 = Vmag / n;
+      
+      // Load current
+      I2 = V2 / (R2 + Rload);
+      
+      // Current reflected to primary
+      I2_reflected = I2 / n;
+      
+      // Magnetizing current
+      Imag = Vmag / Xmag;
+      
+      // Total primary current (phasor sum)
+      const I1_new = Math.sqrt(I2_reflected ** 2 + Imag ** 2);
+      
+      // Check convergence
+      if (Math.abs(I1_new - I1) < 0.0001) {
+        I1 = I1_new;
+        break;
+      }
+      I1 = I1_new;
+    }
+    
+    const Iload = I2;
 
     // Power calculations - Primary side
     const P1 = V1 * I2_reflected;  // Active power (resistive component)
