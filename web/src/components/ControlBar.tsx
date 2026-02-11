@@ -64,7 +64,7 @@ export function ControlBar({
           <div className="text-white font-semibold">Parameters</div>
           <div className="flex gap-3 text-xs">
             {SLIDER_CONFIGS.slice(0, 4).map(config => {
-              const value = dragValue?.key === config.key ? dragValue.value : params[config.key];
+              const value = dragValue?.key === config.key ? dragValue.value : params[config.key] as number;
               return (
                 <div key={config.key} className="flex items-center gap-1">
                   <span className="text-gray-400">{config.symbol}:</span>
@@ -119,7 +119,7 @@ export function ControlBar({
         <div className="glass-dark border-t border-slate-700/50 animate-fade-in">
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
             {SLIDER_CONFIGS.map(config => {
-              const displayValue = dragValue?.key === config.key ? dragValue.value : params[config.key];
+              const displayValue = (dragValue?.key === config.key ? dragValue.value : params[config.key]) as number;
               const isLoadResistance = config.key === 'resistanceLoad';
               const isDisabled = isLoadResistance && loadDisconnected;
               

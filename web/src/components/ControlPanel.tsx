@@ -89,7 +89,7 @@ export function ControlPanel({ params, onParamChange, onReset }: ControlPanelPro
 
       <div className="space-y-6">
         {sliderConfigs.map(config => {
-          const value = params[config.key];
+          const value = params[config.key] as number;
           return (
             <div key={config.key} className="space-y-2">
               <div className="flex justify-between items-baseline">

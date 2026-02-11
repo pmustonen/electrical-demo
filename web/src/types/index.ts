@@ -5,53 +5,8 @@
 // Machine abstraction types
 export * from './machine';
 
-/**
- * Input parameters for the transformer
- */
-export interface TransformerParams {
-  voltagePrimary: number;      // Primary voltage (V)
-  frequency: number;            // AC frequency (Hz)
-  turnsRatio: number;          // Turns ratio N1/N2
-  inductanceMag: number;       // Magnetizing inductance (H)
-  resistancePrimary: number;   // Primary winding resistance (Ω)
-  resistanceSecondary: number; // Secondary winding resistance (Ω)
-  resistanceLoad: number;      // Load resistance (Ω)
-}
-
-/**
- * Calculated transformer values
- */
-export interface TransformerValues {
-  // Voltages
-  voltageSecondary: number;           // V2 (V)
-  voltageMagnetizing: number;         // Vmag (V)
-  
-  // Currents
-  currentPrimary: number;             // I1 (A)
-  currentSecondary: number;           // I2 (A)
-  currentMagnetizing: number;         // Imag (A)
-  currentLoad: number;                // Iload (A)
-  
-  // Power - Primary side
-  powerActivePrimary: number;         // P1 (W)
-  powerReactivePrimary: number;       // Q1 (VAR)
-  powerApparentPrimary: number;       // S1 (VA)
-  
-  // Power - Secondary side
-  powerActiveSecondary: number;       // P2 (W)
-  powerReactiveSecondary: number;     // Q2 (VAR)
-  powerApparentSecondary: number;     // S2 (VA)
-  
-  // Power - Load
-  powerLoad: number;                  // Pload (W)
-  
-  // Power - Magnetizing
-  powerReactiveMagnetizing: number;   // Qmag (VAR)
-  
-  // Phase angle
-  powerFactor: number;                // cos(φ)
-  phaseAngle: number;                 // φ (radians)
-}
+// Machine-specific types
+export * from './machines/transformer';
 
 /**
  * Time-domain waveform data for voltage and current
@@ -69,7 +24,7 @@ export interface WaveformData {
 }
 
 /**
- * Power calculation data showing p(t) = v(t) × i(t)
+ * Power calculation data showing p(t) = v(t) * i(t)
  */
 export interface PowerCalculationData {
   time: number[];                  // Time array (s)
@@ -81,10 +36,10 @@ export interface PowerCalculationData {
   powerActive: number;             // Active power P (W)
   powerReactive: number;           // Reactive power Q (VAR)
   powerApparent: number;           // Apparent power S (VA)
-  powerFactor: number;             // Power factor cos(φ)
+  powerFactor: number;             // Power factor cos(phi)
   
   // Magnetizing power (only for primary side)
-  powerMagnetizing: number[] | null;  // Pure magnetizing power p_mag(t) = v(t) × i_mag(t) (W)
+  powerMagnetizing: number[] | null;  // Pure magnetizing power p_mag(t) = v(t) * i_mag(t) (W)
 }
 
 /**

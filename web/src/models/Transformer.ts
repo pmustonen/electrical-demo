@@ -4,6 +4,9 @@ import type {
   WaveformData,
   PowerCalculationData,
   TransformerSide,
+  IMachine,
+  MachineType,
+  MachineMetadata,
 } from '../types';
 
 /**
@@ -12,19 +15,48 @@ import type {
  * This class implements the physics of a single-phase AC transformer
  * including voltage transformation, current calculations, power analysis,
  * and time-domain waveform generation.
+ * 
+ * Implements IMachine interface for compatibility with multi-machine platform.
  */
-export class Transformer {
+export class Transformer implements IMachine {
+  readonly type: MachineType = 'transformer';
   private params: TransformerParams;
 
   constructor(params: TransformerParams) {
-    this.params = { ...params };
+    // Ensure voltage alias matches voltagePrimary
+    const voltage = params.voltagePrimary || params.voltage;
+    this.params = { 
+      ...params,
+      voltage,
+      voltagePrimary: voltage,
+    };
+  }
+
+  /**
+   * Get machine metadata for UI rendering
+   */
+  getMetadata(): MachineMetadata {
+    return {
+      name: 'AC Transformer',
+      description: 'Single-phase power transformer with magnetizing inductance',
+      icon: '⚡',
+      category: 'static',
+      supportsWaveforms: true,
+      supportsPowerTriangle: true,
+    };
   }
 
   /**
    * Update transformer parameters
    */
   updateParams(params: Partial<TransformerParams>): void {
-    this.params = { ...this.params, ...params };
+    this.params = { ...this.params, ...params } as TransformerParams;
+    // Keep voltage alias in sync with voltagePrimary
+    if (params.voltagePrimary !== undefined) {
+      this.params.voltage = params.voltagePrimary;
+    } else if (params.voltage !== undefined) {
+      this.params.voltagePrimary = params.voltage;
+    }
   }
 
   /**
@@ -112,6 +144,9 @@ export class Transformer {
     // Power factor and phase angle
     const powerFactor = P1 / S1;
     const phaseAngle = Math.acos(powerFactor);
+    
+    // Efficiency (output power / input power)
+    const efficiency = P2 / P1;
 
     return {
       voltageSecondary: V2,
@@ -130,6 +165,11 @@ export class Transformer {
       powerReactiveMagnetizing: Qmag,
       powerFactor,
       phaseAngle,
+      // Base interface values (for IMachine compatibility)
+      powerActive: P1,
+      powerReactive: Q1,
+      powerApparent: S1,
+      efficiency,
     };
   }
 
@@ -189,7 +229,22 @@ export class Transformer {
    * @param cycles - Number of AC cycles (default: 3)
    * @param pointsPerCycle - Points per cycle (default: 100)
    */
-  getPowerCalculationData(
+  /**
+   * Get power calculation data (IMachine interface implementation)
+   * @param points - Number of points to generate (uses pointsPerCycle internally)
+   */
+  getPowerCalculationData(points?: number): PowerCalculationData {
+    const pointsPerCycle = points ? Math.floor(points / 3) : 100;
+    return this.getPowerCalculationDataForSide('primary', 3, pointsPerCycle);
+  }
+
+  /**
+   * Get power calculation data for specific transformer side
+   * @param side - Which side to calculate power for
+   * @param cycles - Number of AC cycles
+   * @param pointsPerCycle - Points per cycle
+   */
+  getPowerCalculationDataForSide(
     side: TransformerSide = 'primary',
     cycles: number = 3,
     pointsPerCycle: number = 100
