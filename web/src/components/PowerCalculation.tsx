@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -34,7 +35,17 @@ export function PowerCalculation({
   side, 
   onSideChange 
 }: PowerCalculationProps) {
+  const [showReferenceLinesState, setShowReferenceLinesState] = useState({
+    P: true,
+    Q: false,
+    S: false,
+  });
+
   const timeMs = powerCalcData.time.map(t => (t * 1000).toFixed(1));
+
+  // Helper to create constant reference lines
+  const createReferenceLine = (value: number) => 
+    Array(powerCalcData.time.length).fill(value);
 
   const powerData = {
     labels: timeMs,
@@ -77,6 +88,40 @@ export function PowerCalculation({
         pointRadius: 0,
         fill: false,
         tension: 0.4,
+      }] : []),
+      // Add reference lines for P, Q, S
+      ...(showReferenceLinesState.P ? [{
+        label: 'P (Active Power)',
+        data: createReferenceLine(powerCalcData.powerActive),
+        borderColor: '#10b981',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderDash: [8, 4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+      }] : []),
+      ...(showReferenceLinesState.Q ? [{
+        label: 'Q (Reactive Power)',
+        data: createReferenceLine(powerCalcData.powerReactive),
+        borderColor: '#6366f1',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderDash: [8, 4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+      }] : []),
+      ...(showReferenceLinesState.S ? [{
+        label: 'S (Apparent Power)',
+        data: createReferenceLine(powerCalcData.powerApparent),
+        borderColor: '#8b5cf6',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderDash: [8, 4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
       }] : []),
     ],
   };
@@ -157,27 +202,67 @@ export function PowerCalculation({
           Power Calculation
         </h2>
         
-        <div className="flex gap-1 glass rounded-lg p-1">
-          <button
-            onClick={() => onSideChange('primary')}
-            className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
-              ${side === 'primary'
-                ? 'bg-primary-500 text-white shadow-lg' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-          >
-            Primary
-          </button>
-          <button
-            onClick={() => onSideChange('secondary')}
-            className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
-              ${side === 'secondary'
-                ? 'bg-primary-500 text-white shadow-lg' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-          >
-            Secondary
-          </button>
+        <div className="flex items-center gap-2">
+          {/* Reference Line Toggles */}
+          <div className="flex gap-1">
+            <button
+              onClick={() => setShowReferenceLinesState(prev => ({ ...prev, P: !prev.P }))}
+              className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+                ${showReferenceLinesState.P 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              title="Toggle active power reference line"
+            >
+              P
+            </button>
+            <button
+              onClick={() => setShowReferenceLinesState(prev => ({ ...prev, Q: !prev.Q }))}
+              className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+                ${showReferenceLinesState.Q 
+                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              title="Toggle reactive power reference line"
+            >
+              Q
+            </button>
+            <button
+              onClick={() => setShowReferenceLinesState(prev => ({ ...prev, S: !prev.S }))}
+              className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+                ${showReferenceLinesState.S 
+                  ? 'bg-violet-500/20 text-violet-400 border border-violet-500/50' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              title="Toggle apparent power reference line"
+            >
+              S
+            </button>
+          </div>
+
+          {/* Side Selector */}
+          <div className="flex gap-1 glass rounded-lg p-1">
+            <button
+              onClick={() => onSideChange('primary')}
+              className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+                ${side === 'primary'
+                  ? 'bg-primary-500 text-white shadow-lg' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+            >
+              Primary
+            </button>
+            <button
+              onClick={() => onSideChange('secondary')}
+              className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+                ${side === 'secondary'
+                  ? 'bg-primary-500 text-white shadow-lg' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+            >
+              Secondary
+            </button>
+          </div>
         </div>
       </div>
 
