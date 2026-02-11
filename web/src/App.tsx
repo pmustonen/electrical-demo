@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useTransformer } from './hooks/useTransformer';
+import { useMachine } from './hooks/useMachine';
+import type { MachineType } from './types';
 import { ControlBar } from './components/ControlBar';
 import { PowerTriangle } from './components/PowerTriangle';
 import { WaveformChart } from './components/WaveformChart';
@@ -8,21 +9,23 @@ import { PowerCalculation } from './components/PowerCalculation';
 function App() {
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [loadDisconnected, setLoadDisconnected] = useState(false);
+  const [machineType] = useState<MachineType>('transformer'); // Will add selector later
 
-  // Pass override params to hook when load is disconnected
+  // Use generic machine hook
   const {
+    config,
     params,
     values,
     waveformData,
     powerCalcData,
     updateParam,
     resetParams,
-    loadGridTransformer,
+    loadPreset,
     setPowerCalcSide,
     powerCalcSide,
-  } = useTransformer(
-    loadDisconnected ? { resistanceLoad: 1e9 } : undefined // 1GΩ = open circuit
-  );
+  } = useMachine(machineType, {
+    overrideParams: loadDisconnected ? { resistanceLoad: 1e9 } : undefined, // 1GΩ = open circuit
+  });
 
   return (
     <div className="h-full flex flex-col">
@@ -34,7 +37,7 @@ function App() {
             ⚡
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white">AC Transformer Education</h1>
+            <h1 className="text-lg font-bold text-white">Electrical Machines Education</h1>
             <p className="text-xs text-gray-400">Interactive Visualization</p>
           </div>
         </div>
@@ -73,9 +76,11 @@ function App() {
         isExpanded={isControlsExpanded}
         onToggle={() => setIsControlsExpanded(!isControlsExpanded)}
         params={params}
+        parameterConfigs={config.parameters}
         onParamChange={updateParam}
         onReset={resetParams}
-        onLoadGridTransformer={loadGridTransformer}
+        onLoadPreset={(name) => loadPreset(name)}
+        presets={config.presets || []}
         loadDisconnected={loadDisconnected}
         onLoadDisconnectToggle={() => setLoadDisconnected(!loadDisconnected)}
       />

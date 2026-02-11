@@ -10,7 +10,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import type { TransformerValues } from '../types';
+import type { MachineValues } from '../types';
 
 ChartJS.register(
   CategoryScale,
@@ -23,13 +23,13 @@ ChartJS.register(
 );
 
 interface PowerTriangleProps {
-  values: TransformerValues;
+  values: MachineValues;
 }
 
 export function PowerTriangle({ values }: PowerTriangleProps) {
-  const P = values.powerActivePrimary;
-  const Q = values.powerReactivePrimary;
-  const S = values.powerApparentPrimary;
+  const P = values.powerActive;
+  const Q = values.powerReactive;
+  const S = values.powerApparent;
   const phaseAngle = Math.atan2(Q, P); // Angle in radians
   const phaseAngleDeg = (phaseAngle * 180 / Math.PI);
 
