@@ -29,6 +29,8 @@ export function PowerTriangle({ values }: PowerTriangleProps) {
   const P = values.powerActivePrimary;
   const Q = values.powerReactivePrimary;
   const S = values.powerApparentPrimary;
+  const phaseAngle = Math.atan2(Q, P); // Angle in radians
+  const phaseAngleDeg = (phaseAngle * 180 / Math.PI);
 
   const data = {
     datasets: [
@@ -77,10 +79,50 @@ export function PowerTriangle({ values }: PowerTriangleProps) {
 
   const maxValue = Math.max(S, P, Q) * 1.15;
 
+  // Plugin to draw angle arc
+  const angleArcPlugin = {
+    id: 'angleArc',
+    afterDatasetsDraw: (chart: any) => {
+      const ctx = chart.ctx;
+      const xScale = chart.scales.x;
+      const yScale = chart.scales.y;
+      
+      // Get origin in canvas coordinates
+      const originX = xScale.getPixelForValue(0);
+      const originY = yScale.getPixelForValue(0);
+      
+      // Arc radius in pixels
+      const arcRadius = 40;
+      
+      // Draw arc
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(originX, originY, arcRadius, -phaseAngle, 0, true);
+      ctx.strokeStyle = '#fbbf24'; // amber color
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Draw angle label
+      const labelAngle = -phaseAngle / 2;
+      const labelRadius = arcRadius + 15;
+      const labelX = originX + labelRadius * Math.cos(labelAngle);
+      const labelY = originY - labelRadius * Math.sin(labelAngle);
+      
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`φ = ${phaseAngleDeg.toFixed(1)}°`, labelX, labelY);
+      
+      ctx.restore();
+    },
+  };
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
+      angleArc: angleArcPlugin,
       legend: {
         display: true,
         position: 'top' as const,
@@ -171,7 +213,7 @@ export function PowerTriangle({ values }: PowerTriangleProps) {
       <h2 className="text-base font-bold text-white mb-3">Power Triangle</h2>
       
       <div className="flex-1 min-h-0">
-        <Scatter data={data} options={options} />
+        <Scatter data={data} options={options} plugins={[angleArcPlugin]} />
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
@@ -198,11 +240,16 @@ export function PowerTriangle({ values }: PowerTriangleProps) {
         </div>
       </div>
 
-      <div className="mt-2 text-center">
-        <span className="text-xs text-gray-400">Power Factor: </span>
-        <span className="text-sm font-bold text-white tabular-nums">
-          {values.powerFactor.toFixed(3)}
-        </span>
+      <div className="mt-2 text-center space-y-1">
+        <div>
+          <span className="text-xs text-gray-400">Power Factor = cos(φ) = </span>
+          <span className="text-sm font-bold text-white tabular-nums">
+            {values.powerFactor.toFixed(3)}
+          </span>
+        </div>
+        <div className="text-xs text-gray-500">
+          cos({phaseAngleDeg.toFixed(1)}°) = {Math.cos(phaseAngle).toFixed(3)}
+        </div>
       </div>
     </div>
   );
