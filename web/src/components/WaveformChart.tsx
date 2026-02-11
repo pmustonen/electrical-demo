@@ -39,6 +39,56 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
     current: { min: number; max: number };
   } | null>(null);
 
+  // Find peaks of voltage and current for phase shift visualization
+  const getPeakIndices = () => {
+    const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
+    const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
+    
+    // Find first positive peak for voltage (local maximum)
+    let vPeak = -1;
+    let vPeakValue = -Infinity;
+    // Look in first cycle (first third of data)
+    const searchRange = Math.floor(voltages.length / 3);
+    for (let i = 1; i < searchRange - 1; i++) {
+      if (voltages[i] > voltages[i-1] && voltages[i] > voltages[i+1] && voltages[i] > 0) {
+        if (voltages[i] > vPeakValue) {
+          vPeakValue = voltages[i];
+          vPeak = i;
+        }
+      }
+    }
+    
+    // Find first positive peak for current (local maximum)
+    let iPeak = -1;
+    let iPeakValue = -Infinity;
+    for (let i = 1; i < searchRange - 1; i++) {
+      if (currents[i] > currents[i-1] && currents[i] > currents[i+1] && currents[i] > 0) {
+        if (currents[i] > iPeakValue) {
+          iPeakValue = currents[i];
+          iPeak = i;
+        }
+      }
+    }
+    
+    // Calculate time difference and period
+    let timeDiff = 0;
+    let period = 0;
+    if (vPeak !== -1 && iPeak !== -1) {
+      timeDiff = Math.abs(waveformData.time[iPeak] - waveformData.time[vPeak]);
+      // Period is total time divided by number of cycles
+      period = (waveformData.time[waveformData.time.length - 1] - waveformData.time[0]) / 3;
+    }
+    
+    return {
+      vPeak,
+      iPeak,
+      vPeakValue,
+      iPeakValue,
+      timeDiff,
+      period,
+    };
+  };
+
   // Calculate RMS values (Peak / √2)
   const getRMSValues = () => {
     const v1Peak = Math.max(...waveformData.v1.map(Math.abs));
@@ -220,6 +270,48 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
             tension: 0,
           }
         );
+      }
+    }
+    
+    // Add peak markers for phase shift visualization
+    if (showPhaseShift && viewMode !== 'both') {
+      const peaks = getPeakIndices();
+      
+      if (peaks.vPeak !== -1 && peaks.iPeak !== -1) {
+        const voltageColor = viewMode === 'secondary' ? '#8b5cf6' : '#6366f1';
+        const currentColor = viewMode === 'secondary' ? '#f59e0b' : '#10b981';
+        
+        // Voltage peak marker
+        const vPeakData = waveformData.time.map((_t, idx) => 
+          idx === peaks.vPeak ? peaks.vPeakValue : null
+        );
+        datasets.push({
+          label: 'V peak',
+          data: vPeakData,
+          borderColor: voltageColor,
+          backgroundColor: voltageColor,
+          borderWidth: 3,
+          pointRadius: 8,
+          pointStyle: 'circle' as const,
+          yAxisID: 'y-voltage',
+          showLine: false,
+        });
+        
+        // Current peak marker
+        const iPeakData = waveformData.time.map((_t, idx) => 
+          idx === peaks.iPeak ? peaks.iPeakValue : null
+        );
+        datasets.push({
+          label: 'I peak',
+          data: iPeakData,
+          borderColor: currentColor,
+          backgroundColor: currentColor,
+          borderWidth: 3,
+          pointRadius: 8,
+          pointStyle: 'circle' as const,
+          yAxisID: 'y-current',
+          showLine: false,
+        });
       }
     }
     
@@ -414,9 +506,16 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
         {viewMode === 'primary' && 'Showing primary side waveforms'}
         {viewMode === 'secondary' && 'Showing secondary side waveforms'}
         {showRMS && ' • RMS values shown'}
-        {showPhaseShift && viewMode !== 'both' && (
-          ` • Phase shift: ${(phaseAngle * 180 / Math.PI).toFixed(1)}°`
-        )}
+        {showPhaseShift && viewMode !== 'both' && (() => {
+          const peaks = getPeakIndices();
+          const angleCalc = (phaseAngle * 180 / Math.PI).toFixed(1);
+          if (peaks.vPeak !== -1 && peaks.iPeak !== -1) {
+            const timeDiffMs = (peaks.timeDiff * 1000).toFixed(2);
+            const periodMs = (peaks.period * 1000).toFixed(2);
+            return ` • Δt = ${timeDiffMs}ms, T = ${periodMs}ms → φ = (Δt/T)×360° = ${angleCalc}°`;
+          }
+          return ` • Phase shift: ${angleCalc}°`;
+        })()}
         {axesFrozen && ' • 🔒 Axes frozen'}
       </div>
     </div>
