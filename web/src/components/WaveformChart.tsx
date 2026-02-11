@@ -32,10 +32,58 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('both');
   const [axesFrozen, setAxesFrozen] = useState(false);
   const [showRMS, setShowRMS] = useState(true);
+  const [showPhaseShift, setShowPhaseShift] = useState(false);
   const frozenRangesRef = useRef<{
     voltage: { min: number; max: number };
     current: { min: number; max: number };
   } | null>(null);
+
+  // Calculate phase shift (time delay between voltage and current zero crossings)
+  const getPhaseShift = () => {
+    const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
+    const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
+    const time = waveformData.time;
+    
+    // Find first positive zero crossing for voltage (going from negative to positive)
+    let vZeroCrossing = -1;
+    for (let i = 1; i < voltages.length; i++) {
+      if (voltages[i-1] < 0 && voltages[i] >= 0) {
+        vZeroCrossing = i;
+        break;
+      }
+    }
+    
+    // Find first positive zero crossing for current
+    let iZeroCrossing = -1;
+    for (let i = 1; i < currents.length; i++) {
+      if (currents[i-1] < 0 && currents[i] >= 0) {
+        iZeroCrossing = i;
+        break;
+      }
+    }
+    
+    if (vZeroCrossing === -1 || iZeroCrossing === -1) {
+      return { timeDelay: 0, angleDelay: 0, vIndex: -1, iIndex: -1 };
+    }
+    
+    // Calculate time delay
+    const timeDelay = Math.abs(time[iZeroCrossing] - time[vZeroCrossing]);
+    
+    // Calculate period from frequency (approximate from time array)
+    const period = (time[time.length - 1] - time[0]) / 3; // 3 cycles in data
+    
+    // Convert to angle in degrees
+    const angleDelay = (timeDelay / period) * 360;
+    
+    return {
+      timeDelay,
+      angleDelay,
+      vIndex: vZeroCrossing,
+      iIndex: iZeroCrossing,
+      vTime: time[vZeroCrossing],
+      iTime: time[iZeroCrossing],
+    };
+  };
 
   // Calculate RMS values (Peak / √2)
   const getRMSValues = () => {
@@ -221,6 +269,49 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
       }
     }
     
+    // Add phase shift markers (only when not in 'both' mode and showPhaseShift is enabled)
+    if (showPhaseShift && viewMode !== 'both') {
+      const phaseInfo = getPhaseShift();
+      
+      if (phaseInfo.vIndex !== -1 && phaseInfo.iIndex !== -1) {
+        // Create vertical line effect using scatter points
+        const voltageColor = viewMode === 'secondary' ? '#8b5cf6' : '#6366f1';
+        const currentColor = viewMode === 'secondary' ? '#f59e0b' : '#10b981';
+        
+        // Voltage zero-crossing marker
+        const vMarkerData = waveformData.time.map((_t, idx) => 
+          idx === phaseInfo.vIndex ? 0 : null
+        );
+        datasets.push({
+          label: 'V zero crossing',
+          data: vMarkerData,
+          borderColor: voltageColor,
+          backgroundColor: voltageColor,
+          borderWidth: 3,
+          pointRadius: 6,
+          pointStyle: 'rectRot' as const,
+          yAxisID: 'y-voltage',
+          showLine: false,
+        });
+        
+        // Current zero-crossing marker  
+        const iMarkerData = waveformData.time.map((_t, idx) => 
+          idx === phaseInfo.iIndex ? 0 : null
+        );
+        datasets.push({
+          label: 'I zero crossing',
+          data: iMarkerData,
+          borderColor: currentColor,
+          backgroundColor: currentColor,
+          borderWidth: 3,
+          pointRadius: 6,
+          pointStyle: 'rectRot' as const,
+          yAxisID: 'y-current',
+          showLine: false,
+        });
+      }
+    }
+    
     return datasets;
   };
 
@@ -344,6 +435,20 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         <h2 className="text-base font-bold text-white">Voltage & Current Waveforms</h2>
         
         <div className="flex items-center gap-2">
+          {/* Phase Shift Toggle */}
+          <button
+            onClick={() => setShowPhaseShift(!showPhaseShift)}
+            className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+              ${showPhaseShift 
+                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            title={showPhaseShift ? 'Hide phase shift markers' : 'Show phase shift markers'}
+            disabled={viewMode === 'both'}
+          >
+            φ
+          </button>
+
           {/* RMS Toggle */}
           <button
             onClick={() => setShowRMS(!showRMS)}
@@ -398,6 +503,12 @@ export function WaveformChart({ waveformData }: WaveformChartProps) {
         {viewMode === 'primary' && 'Showing primary side waveforms'}
         {viewMode === 'secondary' && 'Showing secondary side waveforms'}
         {showRMS && ' • RMS values shown'}
+        {showPhaseShift && viewMode !== 'both' && (() => {
+          const phaseInfo = getPhaseShift();
+          return phaseInfo.vIndex !== -1 
+            ? ` • Phase shift: ${phaseInfo.angleDelay.toFixed(1)}°` 
+            : '';
+        })()}
         {axesFrozen && ' • 🔒 Axes frozen'}
       </div>
     </div>
