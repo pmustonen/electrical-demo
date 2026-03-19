@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMachine } from './hooks/useMachine';
 import type { MachineType } from './types';
+import { MachineSelector } from './components/MachineSelector';
 import { ControlBar } from './components/ControlBar';
 import { PowerTriangle } from './components/PowerTriangle';
 import { WaveformChart } from './components/WaveformChart';
@@ -9,7 +10,7 @@ import { PowerCalculation } from './components/PowerCalculation';
 function App() {
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [loadDisconnected, setLoadDisconnected] = useState(false);
-  const [machineType] = useState<MachineType>('transformer'); // Will add selector later
+  const [machineType, setMachineType] = useState<MachineType>('transformer');
 
   // Use generic machine hook
   const {
@@ -27,11 +28,16 @@ function App() {
     overrideParams: loadDisconnected ? { resistanceLoad: 1e9 } : undefined, // 1GΩ = open circuit
   });
 
+  const handleMachineChange = (newMachineType: MachineType) => {
+    setMachineType(newMachineType);
+    setLoadDisconnected(false); // Reset load state when switching machines
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Minimal Header */}
       <header className="glass-dark border-b border-slate-700/50 px-6 py-3 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-violet-500 
                           flex items-center justify-center text-white font-bold text-xl shadow-lg">
             ⚡
@@ -40,6 +46,12 @@ function App() {
             <h1 className="text-lg font-bold text-white">Electrical Machines Education</h1>
             <p className="text-xs text-gray-400">Interactive Visualization</p>
           </div>
+          
+          {/* Machine Selector */}
+          <MachineSelector
+            currentMachine={machineType}
+            onMachineChange={handleMachineChange}
+          />
         </div>
         
         <div className="text-xs text-gray-400">
@@ -52,12 +64,16 @@ function App() {
         <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Power Triangle */}
           <div className="animate-scale-in min-h-0">
-            <PowerTriangle values={values} />
+            <PowerTriangle values={values} machineType={machineType} />
           </div>
 
           {/* Waveforms */}
           <div className="animate-scale-in min-h-0" style={{ animationDelay: '50ms' }}>
-            <WaveformChart waveformData={waveformData} phaseAngle={values.phaseAngle} />
+            <WaveformChart 
+              waveformData={waveformData} 
+              phaseAngle={values.phaseAngle}
+              machineType={machineType}
+            />
           </div>
 
           {/* Power Calculation */}
@@ -66,6 +82,8 @@ function App() {
               powerCalcData={powerCalcData}
               side={powerCalcSide}
               onSideChange={setPowerCalcSide}
+              machineType={machineType}
+              values={values}
             />
           </div>
         </div>
@@ -76,6 +94,7 @@ function App() {
         isExpanded={isControlsExpanded}
         onToggle={() => setIsControlsExpanded(!isControlsExpanded)}
         params={params}
+        values={values}
         parameterConfigs={config.parameters}
         onParamChange={updateParam}
         onReset={resetParams}
@@ -83,6 +102,7 @@ function App() {
         presets={config.presets || []}
         loadDisconnected={loadDisconnected}
         onLoadDisconnectToggle={() => setLoadDisconnected(!loadDisconnected)}
+        machineType={machineType}
       />
     </div>
   );

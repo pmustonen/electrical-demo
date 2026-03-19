@@ -6,19 +6,21 @@
 
 import { Transformer } from '../../models/Transformer';
 import type { MachineConfig, MachineParameter, MachinePreset, TransformerParams } from '../../types';
+import { HARMONIC_PARAMETERS, DEFAULT_HARMONIC_PARAMS } from '../harmonic-params';
 
 /**
  * Default transformer parameters for educational demonstration
  */
 export const DEFAULT_TRANSFORMER_PARAMS: TransformerParams = {
-  voltage: 230,               // Supply voltage (IMachine compatibility)
-  voltagePrimary: 230,        // 230V AC (European standard)
-  frequency: 50,              // 50 Hz
-  turnsRatio: 2,              // 2:1 step-down
-  inductanceMag: 0.5,         // 0.5 H
-  resistancePrimary: 1,       // 1 Ω
-  resistanceSecondary: 0.5,   // 0.5 Ω
-  resistanceLoad: 10,         // 10 Ω
+  voltage: 230,
+  voltagePrimary: 230,
+  frequency: 50,
+  turnsRatio: 2,
+  inductanceMag: 0.5,
+  resistancePrimary: 1,
+  resistanceSecondary: 0.5,
+  resistanceLoad: 10,
+  ...DEFAULT_HARMONIC_PARAMS,
 };
 
 /**
@@ -104,6 +106,7 @@ export const TRANSFORMER_PARAMETERS: MachineParameter[] = [
     category: 'load',
     description: 'Connected load resistance',
   },
+  ...HARMONIC_PARAMETERS,
 ];
 
 /**

@@ -7,6 +7,9 @@ export * from './machine';
 
 // Machine-specific types
 export * from './machines/transformer';
+export * from './machines/induction-motor';
+export * from './machines/synchronous-motor';
+export * from './machines/bess';
 
 /**
  * Time-domain waveform data for voltage and current

@@ -10,7 +10,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import type { WaveformData } from '../types';
+import type { WaveformData, MachineType } from '../types';
 
 ChartJS.register(
   CategoryScale,
@@ -25,11 +25,12 @@ ChartJS.register(
 interface WaveformChartProps {
   waveformData: WaveformData;
   phaseAngle: number; // Phase angle in radians
+  machineType: MachineType;
 }
 
 type ViewMode = 'primary' | 'secondary' | 'both';
 
-export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) {
+export function WaveformChart({ waveformData, phaseAngle, machineType }: WaveformChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('primary');
   const [axesFrozen, setAxesFrozen] = useState(false);
   const [showRMS, setShowRMS] = useState(true);
@@ -38,54 +39,60 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
     voltage: { min: number; max: number };
     current: { min: number; max: number };
   } | null>(null);
+  
+  // For 3-phase systems: only show single phase
+  // For transformer: show primary/secondary/both
+  const is3Phase = machineType === 'induction-motor' || machineType === 'synchronous-motor' || machineType === 'bess';
+  const showViewModeSelector = !is3Phase; // Only transformer has multiple sides
+  const primaryLabel = is3Phase ? 'Phase A' : 'Primary';
+  const secondaryLabel = 'Secondary'; // Not used for 3-phase systems
 
-  // Find peaks of voltage and current for phase shift visualization
-  const getPeakIndices = () => {
+  // Find zero-crossings of voltage and current for phase shift calculation
+  const getZeroCrossings = () => {
     const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
     const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
+    const time = waveformData.time;
     
-    // Find first positive peak for voltage (local maximum)
-    let vPeak = -1;
-    let vPeakValue = -Infinity;
-    // Look in first cycle (first third of data)
-    const searchRange = Math.floor(voltages.length / 3);
-    for (let i = 1; i < searchRange - 1; i++) {
-      if (voltages[i] > voltages[i-1] && voltages[i] > voltages[i+1] && voltages[i] > 0) {
-        if (voltages[i] > vPeakValue) {
-          vPeakValue = voltages[i];
-          vPeak = i;
-        }
+    // Find first positive-going zero crossing for voltage
+    let vZero = -1;
+    for (let i = 1; i < voltages.length; i++) {
+      if (voltages[i-1] <= 0 && voltages[i] > 0) {
+        vZero = i;
+        break;
       }
     }
     
-    // Find first positive peak for current (local maximum)
-    let iPeak = -1;
-    let iPeakValue = -Infinity;
-    for (let i = 1; i < searchRange - 1; i++) {
-      if (currents[i] > currents[i-1] && currents[i] > currents[i+1] && currents[i] > 0) {
-        if (currents[i] > iPeakValue) {
-          iPeakValue = currents[i];
-          iPeak = i;
-        }
+    // Find first positive-going zero crossing for current
+    let iZero = -1;
+    for (let i = 1; i < currents.length; i++) {
+      if (currents[i-1] <= 0 && currents[i] > 0) {
+        iZero = i;
+        break;
       }
     }
     
     // Calculate time difference and period
     let timeDiff = 0;
     let period = 0;
-    if (vPeak !== -1 && iPeak !== -1) {
-      timeDiff = Math.abs(waveformData.time[iPeak] - waveformData.time[vPeak]);
-      // Period is total time divided by number of cycles
-      period = (waveformData.time[waveformData.time.length - 1] - waveformData.time[0]) / 3;
+    if (vZero !== -1 && iZero !== -1) {
+      // Time difference (can be positive or negative)
+      timeDiff = time[iZero] - time[vZero];
+      
+      // Period is total time divided by number of cycles (typically 2-3 cycles)
+      const totalTime = time[time.length - 1] - time[0];
+      period = totalTime / 2; // Assume 2 cycles for better accuracy
+      
+      // Normalize time difference to be within -period/2 to +period/2
+      while (timeDiff > period / 2) timeDiff -= period;
+      while (timeDiff < -period / 2) timeDiff += period;
     }
     
     return {
-      vPeak,
-      iPeak,
-      vPeakValue,
-      iPeakValue,
-      timeDiff,
+      vZero,
+      iZero,
+      timeDiff, // Keep sign! Positive = current leads, negative = current lags
       period,
+      found: vZero !== -1 && iZero !== -1,
     };
   };
 
@@ -273,21 +280,24 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
       }
     }
     
-    // Add peak markers for phase shift visualization
+    // Add zero-crossing markers for phase shift visualization
     if (showPhaseShift && viewMode !== 'both') {
-      const peaks = getPeakIndices();
+      const crossings = getZeroCrossings();
       
-      if (peaks.vPeak !== -1 && peaks.iPeak !== -1) {
+      if (crossings.found) {
         const voltageColor = viewMode === 'secondary' ? '#8b5cf6' : '#6366f1';
         const currentColor = viewMode === 'secondary' ? '#f59e0b' : '#10b981';
         
-        // Voltage peak marker
-        const vPeakData = waveformData.time.map((_t, idx) => 
-          idx === peaks.vPeak ? peaks.vPeakValue : null
+        const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
+        const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
+        
+        // Voltage zero-crossing marker
+        const vZeroData = waveformData.time.map((_t, idx) => 
+          idx === crossings.vZero ? voltages[idx] : null
         );
         datasets.push({
-          label: 'V peak',
-          data: vPeakData,
+          label: 'V zero',
+          data: vZeroData,
           borderColor: voltageColor,
           backgroundColor: voltageColor,
           borderWidth: 3,
@@ -297,13 +307,13 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
           showLine: false,
         });
         
-        // Current peak marker
-        const iPeakData = waveformData.time.map((_t, idx) => 
-          idx === peaks.iPeak ? peaks.iPeakValue : null
+        // Current zero-crossing marker
+        const iZeroData = waveformData.time.map((_t, idx) => 
+          idx === crossings.iZero ? currents[idx] : null
         );
         datasets.push({
-          label: 'I peak',
-          data: iPeakData,
+          label: 'I zero',
+          data: iZeroData,
           borderColor: currentColor,
           backgroundColor: currentColor,
           borderWidth: 3,
@@ -441,15 +451,16 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
           {/* Phase Shift Toggle */}
           <button
             onClick={() => setShowPhaseShift(!showPhaseShift)}
-            className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+            className={`px-3 py-1 glass rounded transition-all duration-200 text-xs font-medium flex items-center gap-1
               ${showPhaseShift 
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-lg shadow-amber-500/20' 
+                : 'text-gray-400 hover:text-amber-300 hover:bg-amber-500/10 hover:border hover:border-amber-500/30'
               }`}
-            title={showPhaseShift ? 'Hide phase shift markers' : 'Show phase shift markers'}
+            title={showPhaseShift ? 'Hide phase angle calculation' : 'Show phase angle calculation'}
             disabled={viewMode === 'both'}
           >
-            φ
+            <span className="text-base">∠</span>
+            <span>Phase Angle</span>
           </button>
 
           {/* RMS Toggle */}
@@ -478,22 +489,24 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
             {axesFrozen ? '🔒' : '🔓'}
           </button>
 
-          {/* View Mode Toggle */}
-          <div className="flex gap-1 glass rounded-lg p-1">
-            {(['primary', 'secondary', 'both'] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
-                  ${viewMode === mode 
-                    ? 'bg-primary-500 text-white shadow-lg' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-              >
-                {mode === 'both' ? 'Both' : mode === 'primary' ? 'Primary' : 'Secondary'}
-              </button>
-            ))}
-          </div>
+          {/* View Mode Toggle - Only for Transformer */}
+          {showViewModeSelector && (
+            <div className="flex gap-1 glass rounded-lg p-1">
+              {(['primary', 'secondary', 'both'] as ViewMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+                    ${viewMode === mode 
+                      ? 'bg-primary-500 text-white shadow-lg' 
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                  {mode === 'both' ? 'Both' : mode === 'primary' ? primaryLabel : secondaryLabel}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -501,21 +514,86 @@ export function WaveformChart({ waveformData, phaseAngle }: WaveformChartProps) 
         <Line data={data} options={options} />
       </div>
 
+      {/* Phase Angle Calculation Panel - Prominent when enabled */}
+      {showPhaseShift && viewMode !== 'both' && (() => {
+        const crossings = getZeroCrossings();
+        const angleCalc = (phaseAngle * 180 / Math.PI).toFixed(1);
+        const angleMagnitude = Math.abs(parseFloat(angleCalc)).toFixed(1);
+        
+        if (crossings.found) {
+          const timeDiffMs = (Math.abs(crossings.timeDiff) * 1000).toFixed(2);
+          const periodMs = (crossings.period * 1000).toFixed(2);
+          const ratio = (Math.abs(crossings.timeDiff) / crossings.period).toFixed(3);
+          
+          return (
+            <div className="mt-3 glass-dark border border-amber-500/30 rounded-lg p-3 bg-amber-500/5">
+              <div className="flex items-start gap-3">
+                <div className="text-amber-400 text-2xl">∠</div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-amber-300 mb-1">
+                    Phase Angle Calculation
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                    <div className="glass rounded px-2 py-1">
+                      <span className="text-gray-400">Time difference:</span>
+                      <span className="text-white font-mono ml-1">Δt = {timeDiffMs} ms</span>
+                    </div>
+                    <div className="glass rounded px-2 py-1">
+                      <span className="text-gray-400">Period:</span>
+                      <span className="text-white font-mono ml-1">T = {periodMs} ms</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs space-y-0.5">
+                    <div className="text-gray-300">
+                      φ = <span className="text-white font-mono">(Δt / T)</span> × 360°
+                    </div>
+                    <div className="text-gray-300 ml-4">
+                      = <span className="text-white font-mono">({timeDiffMs} ms / {periodMs} ms)</span> × 360°
+                    </div>
+                    <div className="text-gray-300 ml-4">
+                      = <span className="text-white font-mono">{ratio}</span> × 360°
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 pt-2 border-t border-amber-500/20">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-amber-400">φ = {phaseAngle < 0 ? '-' : '+'}{angleMagnitude}°</span>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        phaseAngle < 0
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : phaseAngle > 0.01
+                          ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                          : 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
+                      }`}>
+                        {phaseAngle < -0.01 
+                          ? 'Current lags voltage (inductive)' 
+                          : phaseAngle > 0.01
+                          ? 'Current leads voltage (capacitive)' 
+                          : 'Unity power factor'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+        return (
+          <div className="mt-3 glass-dark border border-amber-500/30 rounded-lg p-2 bg-amber-500/5 text-center">
+            <span className="text-amber-400 text-sm font-medium">Phase angle: {angleCalc}°</span>
+          </div>
+        );
+      })()}
+
       <div className="mt-3 text-xs text-gray-400 text-center">
-        {viewMode === 'both' && 'Solid lines: Primary • Dashed lines: Secondary'}
-        {viewMode === 'primary' && 'Showing primary side waveforms'}
-        {viewMode === 'secondary' && 'Showing secondary side waveforms'}
+        {!is3Phase && viewMode === 'both' && `Solid: ${primaryLabel} • Dashed: ${secondaryLabel}`}
+        {!is3Phase && viewMode === 'primary' && `Showing ${primaryLabel.toLowerCase()} waveforms`}
+        {!is3Phase && viewMode === 'secondary' && `Showing ${secondaryLabel.toLowerCase()} waveforms`}
+        {is3Phase && `Showing Phase A (single-phase waveforms, per-phase values)`}
         {showRMS && ' • RMS values shown'}
-        {showPhaseShift && viewMode !== 'both' && (() => {
-          const peaks = getPeakIndices();
-          const angleCalc = (phaseAngle * 180 / Math.PI).toFixed(1);
-          if (peaks.vPeak !== -1 && peaks.iPeak !== -1) {
-            const timeDiffMs = (peaks.timeDiff * 1000).toFixed(2);
-            const periodMs = (peaks.period * 1000).toFixed(2);
-            return ` • Δt = ${timeDiffMs}ms, T = ${periodMs}ms → φ = (Δt/T)×360° = ${angleCalc}°`;
-          }
-          return ` • Phase shift: ${angleCalc}°`;
-        })()}
         {axesFrozen && ' • 🔒 Axes frozen'}
       </div>
     </div>

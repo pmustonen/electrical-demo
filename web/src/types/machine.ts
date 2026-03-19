@@ -13,7 +13,9 @@ import type { WaveformData, PowerCalculationData } from './index';
  */
 export type MachineType = 
   | 'transformer' 
-  | 'induction-motor' 
+  | 'induction-motor'
+  | 'synchronous-motor'
+  | 'bess'
   | 'dc-motor' 
   | 'synchronous-generator';
 
@@ -84,14 +86,18 @@ export interface MachineParams {
   
   /** Supply frequency (Hz) */
   frequency: number;
-  
-  /** Allow machine-specific parameters */
+
+  /** Allow machine-specific parameters (including harmonic3, harmonic5, harmonic7) */
   [key: string]: number | string | boolean;
 }
 
 /**
  * Base calculated values common to all machines
- * Machine-specific values should extend this interface
+ * Machine-specific values should extend this interface.
+ *
+ * Harmonic distortion metrics (thdCurrent, powerDistortion, etc.) are
+ * returned by all machines via the index signature and accessed with
+ * type assertion in components. They equal 0 when no harmonics are active.
  */
 export interface MachineValues {
   /** Active power (W) - real power doing work */
@@ -111,8 +117,8 @@ export interface MachineValues {
   
   /** Phase angle (radians) - angle between voltage and current */
   phaseAngle: number;
-  
-  /** Allow machine-specific values */
+
+  /** Allow machine-specific values (including harmonic metrics) */
   [key: string]: number | string | boolean;
 }
 
@@ -149,6 +155,9 @@ export interface MachineParameter {
   
   /** Whether to hide this parameter from UI (but keep in model) */
   hidden?: boolean;
+  
+  /** Options for select/toggle parameters */
+  options?: Array<{ value: string | number; label: string }>;
 }
 
 /**

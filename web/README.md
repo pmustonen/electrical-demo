@@ -61,8 +61,6 @@ The transformer model implements:
 - Time-domain waveform generation
 - Instantaneous power calculations
 
-All calculations match the Python desktop version exactly.
-
 ## 🎓 Educational Value
 
 Perfect for:
@@ -86,11 +84,6 @@ web/
 ├── public/              # Static assets
 └── package.json         # Dependencies
 ```
-
-## 🔗 Related
-
-- [Python Desktop Version](../python/) - tkinter GUI with matplotlib
-- [Main Repository](../) - Overview of both versions
 
 ## 📄 License
 

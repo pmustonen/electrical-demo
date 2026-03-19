@@ -8,6 +8,10 @@ import type {
   MachineType,
   MachineMetadata,
 } from '../types';
+import {
+  addHarmonicsToCurrentArray,
+  calculateHarmonicMetrics,
+} from '../utils/harmonics';
 
 /**
  * AC Transformer model with full electrical calculations
@@ -141,35 +145,50 @@ export class Transformer implements IMachine {
     // Magnetizing reactive power
     const Qmag = Q1;
 
-    // Power factor and phase angle
+    // Power factor and phase angle (displacement, from fundamental only)
     const powerFactor = P1 / S1;
-    const phaseAngle = Math.acos(powerFactor);
+    // Phase angle for inductive load (negative because current lags voltage)
+    const phaseAngle = -Math.acos(powerFactor);
     
     // Efficiency (output power / input power)
     const efficiency = P2 / P1;
 
+    // Harmonic metrics
+    const h3 = (this.params.harmonic3 as number) ?? 0;
+    const h5 = (this.params.harmonic5 as number) ?? 0;
+    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const harmonics = calculateHarmonicMetrics(I1, V1, P1, Q1, h3, h5, h7);
+    const powerApparentTrue = harmonics.S_total;
+    const powerFactorTrue = harmonics.truePF;
+
     return {
       voltageSecondary: V2,
       voltageMagnetizing: Vmag,
-      currentPrimary: I1,
+      currentPrimary: harmonics.I_total_rms,
       currentSecondary: I2,
       currentMagnetizing: Imag,
       currentLoad: Iload,
       powerActivePrimary: P1,
       powerReactivePrimary: Q1,
-      powerApparentPrimary: S1,
+      powerApparentPrimary: powerApparentTrue,
       powerActiveSecondary: P2,
       powerReactiveSecondary: Q2,
       powerApparentSecondary: S2,
       powerLoad: Pload,
       powerReactiveMagnetizing: Qmag,
-      powerFactor,
+      powerFactor: powerFactorTrue,
       phaseAngle,
       // Base interface values (for IMachine compatibility)
       powerActive: P1,
       powerReactive: Q1,
-      powerApparent: S1,
+      powerApparent: powerApparentTrue,
       efficiency,
+      // Harmonic distortion metrics
+      thdCurrent: harmonics.thd,
+      powerDistortion: harmonics.powerDistortion,
+      displacementPowerFactor: harmonics.displacementPF,
+      distortionPowerFactor: harmonics.distortionPF,
+      truePowerFactor: harmonics.truePF,
     };
   }
 
@@ -187,8 +206,6 @@ export class Transformer implements IMachine {
     const values = this.calculate();
     
     const V2 = values.voltageSecondary;
-    const I1 = values.currentPrimary;
-    const I2 = values.currentSecondary;
     const phi = values.phaseAngle;
 
     // Time array
@@ -204,17 +221,35 @@ export class Transformer implements IMachine {
     // Angular frequency
     const omega = 2 * Math.PI * f;
 
+    // Harmonic amplitudes — needed to recover the fundamental current from I_total_rms
+    const h3 = (this.params.harmonic3 as number) ?? 0;
+    const h5 = (this.params.harmonic5 as number) ?? 0;
+    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const thd = Math.sqrt(h3 ** 2 + h5 ** 2 + h7 ** 2);
+
+    // values.currentPrimary is I_total_rms (what a clamp meter would read).
+    // Recover the fundamental RMS so the base sinusoid carries correct P.
+    // I_fund = I_total / √(1 + THD²)
+    const I1_fund = (values.currentPrimary as number) / Math.sqrt(1 + thd ** 2);
+    const I2_fund = (values.currentSecondary as number); // secondary not inflated
+
     // Peak values (RMS × √2)
     const V1_peak = V1 * Math.sqrt(2);
     const V2_peak = V2 * Math.sqrt(2);
-    const I1_peak = I1 * Math.sqrt(2);
-    const I2_peak = I2 * Math.sqrt(2);
+    const I1_peak = I1_fund * Math.sqrt(2);   // fundamental peak
+    const I2_peak = I2_fund * Math.sqrt(2);
 
     // Generate waveforms
     const v1 = time.map(t => V1_peak * Math.sin(omega * t));
-    const i1 = time.map(t => I1_peak * Math.sin(omega * t - phi));
     const v2 = time.map(t => V2_peak * Math.sin(omega * t));
-    const i2 = time.map(t => I2_peak * Math.sin(omega * t - phi));
+
+    // Fundamental current waveforms
+    const i1_fund = time.map(t => I1_peak * Math.sin(omega * t - phi));
+    const i2_fund = time.map(t => I2_peak * Math.sin(omega * t - phi));
+
+    // Apply current harmonics (harmonic amplitudes scale from the fundamental peak)
+    const i1 = addHarmonicsToCurrentArray(time, i1_fund, omega, h3, h5, h7, I1_peak);
+    const i2 = addHarmonicsToCurrentArray(time, i2_fund, omega, h3, h5, h7, I2_peak);
 
     return { time, v1, i1, v2, i2 };
   }
@@ -267,12 +302,15 @@ export class Transformer implements IMachine {
     const powerApparent = side === 'primary'
       ? values.powerApparentPrimary
       : values.powerApparentSecondary;
-    
+
     const powerFactor = values.powerFactor;
-    
-    // Reactive power from power triangle: Q = S × sin(φ)
-    const phaseAngle = Math.acos(Math.max(-1, Math.min(1, powerFactor)));
-    const powerReactive = powerApparent * Math.sin(phaseAngle);
+
+    // Use displacement reactive power directly — it equals V×I×sin(φ₁) and is
+    // what the Power Triangle also shows. Computing Q as S×sin(acos(truePF))
+    // would give √(Q²+D²) which conflates reactive and distortion power.
+    const powerReactive = side === 'primary'
+      ? values.powerReactivePrimary
+      : values.powerReactiveSecondary;
 
     // Generate pure magnetizing power waveform (only for primary side)
     // p_mag(t) = v(t) × i_mag(t) where i_mag lags v by 90°
