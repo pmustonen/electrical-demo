@@ -168,9 +168,10 @@ export class InductionMotor implements IMachine {
     const Q = -3 * V * I1 * Math.sin(I1_angle);
 
     // Harmonic metrics (applied to stator current)
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
+    // calculateHarmonicMetrics operates per-phase; divide 3-phase totals by 3
     const harmonics = calculateHarmonicMetrics(I1, V, P_in / 3, Q / 3, h3, h5, h7);
 
     return {
@@ -279,9 +280,9 @@ export class InductionMotor implements IMachine {
     }
 
     // Apply current harmonics after loop
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
     const omega = 2 * Math.PI * f;
     const i1h = addHarmonicsToCurrentArray(time, i1, omega, h3, h5, h7, I_peak);
     const i2h = addHarmonicsToCurrentArray(time, i2, omega, h3, h5, h7, I_peak);

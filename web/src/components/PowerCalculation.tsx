@@ -48,11 +48,11 @@ export function PowerCalculation({
   const showSideSelector = machineType === 'transformer';
   const is3Phase = machineType === 'induction-motor' || machineType === 'synchronous-motor' || machineType === 'bess';
 
-  const hasHarmonics = ((values.thdCurrent as number | undefined) ?? 0) > 0.001;
-  const thdPercent = ((values.thdCurrent as number | undefined) ?? 0) * 100;
-  const distortionPF = (values.distortionPowerFactor as number | undefined) ?? 1;
-  const displacementPF = (values.displacementPowerFactor as number | undefined) ?? values.powerFactor;
-  const truePF = (values.truePowerFactor as number | undefined) ?? values.powerFactor;
+  const hasHarmonics = values.thdCurrent > 0.001;
+  const thdPercent = values.thdCurrent * 100;
+  const distortionPF = values.distortionPowerFactor;
+  const displacementPF = values.displacementPowerFactor;
+  const truePF = values.truePowerFactor;
 
   const timeMs = powerCalcData.time.map(t => (t * 1000).toFixed(1));
 

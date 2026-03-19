@@ -87,7 +87,16 @@ export interface MachineParams {
   /** Supply frequency (Hz) */
   frequency: number;
 
-  /** Allow machine-specific parameters (including harmonic3, harmonic5, harmonic7) */
+  /** 3rd harmonic current fraction (0 = off, 0.5 = 50% of fundamental) */
+  harmonic3: number;
+
+  /** 5th harmonic current fraction (0 = off, 0.5 = 50% of fundamental) */
+  harmonic5: number;
+
+  /** 7th harmonic current fraction (0 = off, 0.5 = 50% of fundamental) */
+  harmonic7: number;
+
+  /** Allow machine-specific parameters via dynamic UI (params[config.key]) */
   [key: string]: number | string | boolean;
 }
 
@@ -95,21 +104,20 @@ export interface MachineParams {
  * Base calculated values common to all machines
  * Machine-specific values should extend this interface.
  *
- * Harmonic distortion metrics (thdCurrent, powerDistortion, etc.) are
- * returned by all machines via the index signature and accessed with
- * type assertion in components. They equal 0 when no harmonics are active.
+ * Convention: powerActive/powerReactive/powerApparent are always 3-phase totals (W/VAR/VA).
+ * Harmonic metrics are 0 when no harmonics are active.
  */
 export interface MachineValues {
-  /** Active power (W) - real power doing work */
+  /** Active power — 3-phase total (W) */
   powerActive: number;
   
-  /** Reactive power (VAR) - oscillating power */
+  /** Reactive power — 3-phase total (VAR) */
   powerReactive: number;
   
-  /** Apparent power (VA) - total power capacity */
+  /** Apparent power — 3-phase total (VA) */
   powerApparent: number;
   
-  /** Power factor (0-1) - efficiency of power usage */
+  /** True power factor (0-1); equals displacement PF when no harmonics */
   powerFactor: number;
   
   /** Efficiency (0-1) - output power / input power */
@@ -118,7 +126,22 @@ export interface MachineValues {
   /** Phase angle (radians) - angle between voltage and current */
   phaseAngle: number;
 
-  /** Allow machine-specific values (including harmonic metrics) */
+  /** Total harmonic distortion of current (0 = no harmonics, 0.3 = 30%) */
+  thdCurrent: number;
+
+  /** Distortion power — 3-phase total (VAR equivalent) */
+  powerDistortion: number;
+
+  /** Displacement power factor — cos(φ) of fundamental only */
+  displacementPowerFactor: number;
+
+  /** Distortion power factor — 1/√(1 + THD²) */
+  distortionPowerFactor: number;
+
+  /** True power factor — displacement × distortion */
+  truePowerFactor: number;
+
+  /** Allow machine-specific values via dynamic access */
   [key: string]: number | string | boolean;
 }
 

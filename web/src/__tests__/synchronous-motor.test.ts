@@ -10,6 +10,7 @@ const BASE_PARAMS: SynchronousMotorParams = {
   reactanceSynchronous: 5.0,
   excitationCurrent: 5.0, // Nominal: k_f=V/5 → E_f ≈ V → near-unity PF
   torqueLoad: 200,
+  inertia: 2.5,
   harmonic3: 0,
   harmonic5: 0,
   harmonic7: 0,

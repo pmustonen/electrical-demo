@@ -2,15 +2,12 @@
  * Induction Motor type definitions
  */
 
+import type { MachineParams, MachineValues } from '../machine';
+
 /**
  * Input parameters for 3-phase squirrel cage induction motor
  */
-export interface InductionMotorParams {
-  // Base MachineParams fields
-  voltage: number;             // Line voltage (V)
-  frequency: number;           // Supply frequency (Hz)
-  
-  // Motor configuration
+export interface InductionMotorParams extends MachineParams {
   poles: number;               // Number of poles (2, 4, 6, 8, etc.)
   
   // Stator parameters
@@ -27,45 +24,31 @@ export interface InductionMotorParams {
   // Mechanical load
   torqueLoad: number;          // Load torque (N·m)
   inertia: number;             // Rotor inertia (kg·m²)
-  
-  // Index signature for IMachine compatibility
-  [key: string]: number | string | boolean;
 }
 
 /**
  * Calculated induction motor values
  */
-export interface InductionMotorValues {
-  // Base MachineValues fields
-  powerActive: number;                // Active power (W)
-  powerReactive: number;              // Reactive power (VAR)
-  powerApparent: number;              // Apparent power (VA)
-  powerFactor: number;                // Power factor (0-1)
-  efficiency: number;                 // Efficiency (0-1)
-  phaseAngle: number;                 // Phase angle (radians)
-  
+export interface InductionMotorValues extends MachineValues {
   // Speeds
   speedSync: number;                  // Synchronous speed (RPM)
   speedRotor: number;                 // Rotor speed (RPM)
   slip: number;                       // Slip (0-1)
   
   // Currents
-  currentStator: number;              // Stator current (A)
-  currentRotor: number;               // Rotor current referred to stator (A)
-  currentMag: number;                 // Magnetizing current (A)
+  currentStator: number;              // Stator current per phase (A)
+  currentRotor: number;               // Rotor current referred to stator per phase (A)
+  currentMag: number;                 // Magnetizing current per phase (A)
   
   // Powers
-  powerInput: number;                 // Input electrical power (W)
-  powerAirgap: number;                // Power crossing air gap (W)
+  powerInput: number;                 // Input electrical power — 3-phase total (W)
+  powerAirgap: number;                // Power crossing air gap — 3-phase total (W)
   powerOutput: number;                // Mechanical output power (W)
-  powerCopperStator: number;          // Stator copper loss (W)
-  powerCopperRotor: number;           // Rotor copper loss (W)
+  powerCopperStator: number;          // Stator copper loss — 3-phase total (W)
+  powerCopperRotor: number;           // Rotor copper loss — 3-phase total (W)
   powerCore: number;                  // Core loss (W) - simplified
   
   // Torques
   torqueElectromagnetic: number;      // Electromagnetic torque (N·m)
   torqueOutput: number;               // Output torque (N·m)
-  
-  // Index signature for IMachine compatibility
-  [key: string]: number | string | boolean;
 }

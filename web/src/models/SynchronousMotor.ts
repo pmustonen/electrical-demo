@@ -159,9 +159,10 @@ export class SynchronousMotor implements IMachine {
     const efficiency = P_mech / P_in;
 
     // Harmonic metrics
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
+    // calculateHarmonicMetrics operates per-phase; divide 3-phase totals by 3
     const harmonics = calculateHarmonicMetrics(I_a, V, P_in / 3, Q / 3, h3, h5, h7);
 
     return {
@@ -233,9 +234,9 @@ export class SynchronousMotor implements IMachine {
     }
 
     // Apply current harmonics
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
     const omega_h = 2 * Math.PI * f;
     const i1h = addHarmonicsToCurrentArray(time, i1, omega_h, h3, h5, h7, I_peak);
     const i2h = addHarmonicsToCurrentArray(time, i2, omega_h, h3, h5, h7, I_peak);

@@ -14,6 +14,9 @@ const DEFAULT_PARAMS: TransformerParams = {
   resistancePrimary: 1,       // 1 Ω
   resistanceSecondary: 0.5,   // 0.5 Ω
   resistanceLoad: 10,         // 10 Ω
+  harmonic3: 0,
+  harmonic5: 0,
+  harmonic7: 0,
 };
 
 /**
@@ -29,6 +32,9 @@ const GRID_TRANSFORMER_PARAMS: TransformerParams = {
   resistancePrimary: 5,       // 5 Ω (typical for primary winding)
   resistanceSecondary: 0.02,  // 0.02 Ω (low secondary resistance)
   resistanceLoad: 0.32,       // 0.32 Ω (500 kVA @ 400V ≈ 1250A → R = 400²/500000)
+  harmonic3: 0,
+  harmonic5: 0,
+  harmonic7: 0,
 };
 
 /**

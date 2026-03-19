@@ -34,12 +34,12 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
   const phaseAngle = Math.atan2(Q, P);
   const phaseAngleDeg = (phaseAngle * 180 / Math.PI);
 
-  const hasHarmonics = (values.thdCurrent as number | undefined ?? 0) > 0.001;
-  const D = (values.powerDistortion as number | undefined) ?? 0;
-  const displacementPF = (values.displacementPowerFactor as number | undefined) ?? values.powerFactor;
-  const distortionPF = (values.distortionPowerFactor as number | undefined) ?? 1;
-  const truePF = (values.truePowerFactor as number | undefined) ?? values.powerFactor;
-  const thdPercent = ((values.thdCurrent as number | undefined) ?? 0) * 100;
+  const hasHarmonics = values.thdCurrent > 0.001;
+  const D = values.powerDistortion;
+  const displacementPF = values.displacementPowerFactor;
+  const distortionPF = values.distortionPowerFactor;
+  const truePF = values.truePowerFactor;
+  const thdPercent = values.thdCurrent * 100;
 
   // S_displacement = √(P²+Q²), used for the P-Q triangle
   const S_disp = Math.sqrt(P ** 2 + Q ** 2);

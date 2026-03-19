@@ -141,9 +141,10 @@ export class Bess implements IMachine {
 
     // Harmonic metrics
     const I_rms_fund = S / (3 * V_phase);
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
+    // calculateHarmonicMetrics operates per-phase; divide 3-phase totals by 3
     const harmonics = calculateHarmonicMetrics(I_rms_fund, V_phase, P_actual / 3, Q_actual / 3, h3, h5, h7);
 
     return {
@@ -215,7 +216,7 @@ export class Bess implements IMachine {
 
     // Use the fundamental current (currentGrid is computed from displacement S, not S_total).
     // Using S_total here would inflate the fundamental and erroneously increase P.
-    const I_fund_rms = (values.currentGrid as number);
+    const I_fund_rms = values.currentGrid;
     const I_peak = I_fund_rms * Math.sqrt(2);
     const cycles = 2;
     const samples_per_cycle = 100;
@@ -240,9 +241,9 @@ export class Bess implements IMachine {
     }
 
     // Apply current harmonics
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
     const i1h = addHarmonicsToCurrentArray(time, i1, omega, h3, h5, h7, I_peak);
 
     // For BESS, v2/i2 are not used (single-sided)
@@ -265,18 +266,15 @@ export class Bess implements IMachine {
     // Calculate instantaneous per-phase power p(t) = v(t) × i(t)
     const powerInstantaneousPerPhase = waveforms.v1.map((v, i) => v * waveforms.i1[i]);
 
-    // Scale to total 3-phase so it matches the P setpoint the user configured.
-    // The waveform shows one phase; multiply by 3 to get 3-phase totals consistent
-    // with powerReactive and powerApparent (which are already 3-phase totals).
+    // Scale to total 3-phase to match powerReactive and powerApparent (both 3-phase totals)
     const powerInstantaneous = powerInstantaneousPerPhase.map(p => p * 3);
-    const powerActive = powerInstantaneous.reduce((sum, p) => sum + p, 0) / powerInstantaneous.length;
 
     return {
       time: waveforms.time,
       voltage: waveforms.v1,
       current: waveforms.i1,
       powerInstantaneous,
-      powerActive,
+      powerActive: values.powerActive,
       powerReactive: values.powerReactive,
       powerApparent: values.powerApparent,
       powerFactor: values.powerFactor,

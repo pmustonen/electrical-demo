@@ -12,6 +12,7 @@ const BASE_PARAMS: InductionMotorParams = {
   reactanceRotor: 5.2,
   reactanceMag: 150,
   torqueLoad: 10,
+  inertia: 0.01,
   harmonic3: 0,
   harmonic5: 0,
   harmonic7: 0,

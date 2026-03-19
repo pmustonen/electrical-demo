@@ -154,9 +154,9 @@ export class Transformer implements IMachine {
     const efficiency = P2 / P1;
 
     // Harmonic metrics
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
     const harmonics = calculateHarmonicMetrics(I1, V1, P1, Q1, h3, h5, h7);
     const powerApparentTrue = harmonics.S_total;
     const powerFactorTrue = harmonics.truePF;
@@ -222,16 +222,16 @@ export class Transformer implements IMachine {
     const omega = 2 * Math.PI * f;
 
     // Harmonic amplitudes — needed to recover the fundamental current from I_total_rms
-    const h3 = (this.params.harmonic3 as number) ?? 0;
-    const h5 = (this.params.harmonic5 as number) ?? 0;
-    const h7 = (this.params.harmonic7 as number) ?? 0;
+    const h3 = this.params.harmonic3;
+    const h5 = this.params.harmonic5;
+    const h7 = this.params.harmonic7;
     const thd = Math.sqrt(h3 ** 2 + h5 ** 2 + h7 ** 2);
 
     // values.currentPrimary is I_total_rms (what a clamp meter would read).
     // Recover the fundamental RMS so the base sinusoid carries correct P.
     // I_fund = I_total / √(1 + THD²)
-    const I1_fund = (values.currentPrimary as number) / Math.sqrt(1 + thd ** 2);
-    const I2_fund = (values.currentSecondary as number); // secondary not inflated
+    const I1_fund = values.currentPrimary / Math.sqrt(1 + thd ** 2);
+    const I2_fund = values.currentSecondary; // secondary not inflated
 
     // Peak values (RMS × √2)
     const V1_peak = V1 * Math.sqrt(2);
@@ -294,9 +294,6 @@ export class Transformer implements IMachine {
 
     // Calculate instantaneous power p(t) = v(t) × i(t)
     const powerInstantaneous = voltage.map((v, i) => v * current[i]);
-
-    // Active power = average of instantaneous power
-    const powerActive = powerInstantaneous.reduce((sum, p) => sum + p, 0) / powerInstantaneous.length;
     
     // Apparent power and power factor
     const powerApparent = side === 'primary'
@@ -328,7 +325,7 @@ export class Transformer implements IMachine {
       voltage,
       current,
       powerInstantaneous,
-      powerActive,
+      powerActive: side === 'primary' ? values.powerActivePrimary : values.powerActiveSecondary,
       powerReactive,
       powerApparent,
       powerMagnetizing,
