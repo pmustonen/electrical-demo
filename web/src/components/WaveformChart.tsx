@@ -503,6 +503,30 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
         <Line data={data} options={options} />
       </div>
 
+      {/* RMS Values Display */}
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        {(viewMode === 'primary' || viewMode === 'both') && (<>
+          <div className="glass rounded px-3 py-1.5 flex items-center justify-between">
+            <span className="text-indigo-400 font-medium">{is3Phase ? 'V' : 'V₁'} <span className="text-gray-500">rms</span></span>
+            <span className="text-white font-mono">{rmsValues.v1.toFixed(1)} V</span>
+          </div>
+          <div className="glass rounded px-3 py-1.5 flex items-center justify-between">
+            <span className="text-emerald-400 font-medium">{is3Phase ? 'I' : 'I₁'} <span className="text-gray-500">rms</span></span>
+            <span className="text-white font-mono">{rmsValues.i1.toFixed(2)} A</span>
+          </div>
+        </>)}
+        {(viewMode === 'secondary' || viewMode === 'both') && (<>
+          <div className="glass rounded px-3 py-1.5 flex items-center justify-between">
+            <span className="text-purple-400 font-medium">V₂ <span className="text-gray-500">rms</span></span>
+            <span className="text-white font-mono">{rmsValues.v2.toFixed(1)} V</span>
+          </div>
+          <div className="glass rounded px-3 py-1.5 flex items-center justify-between">
+            <span className="text-amber-400 font-medium">I₂ <span className="text-gray-500">rms</span></span>
+            <span className="text-white font-mono">{rmsValues.i2.toFixed(2)} A</span>
+          </div>
+        </>)}
+      </div>
+
       {/* Phase Angle Calculation Panel - Prominent when enabled */}
       {showPhaseShift && viewMode !== 'both' && (() => {
         const crossings = zeroCrossings;
