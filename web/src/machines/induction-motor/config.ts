@@ -76,7 +76,7 @@ export const MOTOR_PARAMETERS: MachineParameter[] = [
 /**
  * Induction motor presets
  */
-export const MOTOR_PRESETS: MachinePreset[] = [
+export const MOTOR_PRESETS: MachinePreset<InductionMotorParams>[] = [
   {
     name: 'Small Motor',
     description: '1.5 kW, 4-pole, 400V motor',

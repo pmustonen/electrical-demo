@@ -130,7 +130,7 @@ export const BESS_PARAMETERS: MachineParameter[] = [
   ...HARMONIC_PARAMETERS,
 ];
 
-export const BESS_PRESETS: MachinePreset[] = [
+export const BESS_PRESETS: MachinePreset<BessParams>[] = [
   {
     name: 'Grid Support',
     description: 'Pure reactive power for voltage support',

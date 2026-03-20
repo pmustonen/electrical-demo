@@ -5,7 +5,7 @@
  * Replaces useTransformer with a machine-agnostic version.
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { machineRegistry } from '../machines';
 import type { IMachine, MachineType, MachineParams, MachineValues, WaveformData, PowerCalculationData, TransformerSide } from '../types';
 
@@ -35,11 +35,13 @@ export function useMachine(
   // State for machine parameters
   const [params, setParams] = useState<MachineParams>(config.defaultParams);
   
-  // Reset params when machine type changes
-  useEffect(() => {
-    console.log(`[useMachine] Machine type changed to ${machineType}, resetting params`);
+  // Reset params when machine type changes (React-recommended pattern:
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders)
+  const [prevMachineType, setPrevMachineType] = useState(machineType);
+  if (prevMachineType !== machineType) {
+    setPrevMachineType(machineType);
     setParams(config.defaultParams);
-  }, [machineType, config.defaultParams]);
+  }
   
   // State for power calculation side (transformer-specific, but kept for compatibility)
   const [powerCalcSide, setPowerCalcSide] = useState<TransformerSide>('primary');
@@ -52,44 +54,23 @@ export function useMachine(
 
   // Create machine instance and calculate values
   const machine: IMachine = useMemo(
-    () => {
-      console.log(`[useMachine] Creating ${machineType} machine with params:`, effectiveParams);
-      return machineRegistry.create(machineType, effectiveParams);
-    },
+    () => machineRegistry.create(machineType, effectiveParams),
     [machineType, effectiveParams]
   );
   
-  const values: MachineValues = useMemo(() => {
-    const result = machine.calculate();
-    console.log(`[useMachine] Calculated values for ${machineType}:`, result);
-    return result;
-  }, [machine, machineType]);
+  const values: MachineValues = useMemo(
+    () => machine.calculate(),
+    [machine]
+  );
   
-  const waveformData: WaveformData = useMemo(() => {
-    const result = machine.getWaveformData();
-    console.log(`[useMachine] Waveform data for ${machineType}:`, {
-      timeLength: result.time.length,
-      v1Length: result.v1.length,
-      i1Length: result.i1.length,
-      v2Length: result.v2.length,
-      i2Length: result.i2.length,
-    });
-    return result;
-  }, [machine, machineType]);
+  const waveformData: WaveformData = useMemo(
+    () => machine.getWaveformData(),
+    [machine]
+  );
   
   const powerCalcData: PowerCalculationData = useMemo(
-    () => {
-      const result = machine.getPowerCalculationData();
-      console.log(`[useMachine] Power calc data for ${machineType}:`, {
-        timeLength: result.time.length,
-        voltageLength: result.voltage.length,
-        currentLength: result.current.length,
-        powerActive: result.powerActive,
-        powerReactive: result.powerReactive,
-      });
-      return result;
-    },
-    [machine, machineType]
+    () => machine.getPowerCalculationData(),
+    [machine]
   );
 
   /**

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Bess } from '../models/Bess';
 import type { BessParams } from '../types';
+import { testWaveformDataShape, testPowerCalcDataShape } from './test-helpers';
 
 const BASE_PARAMS: BessParams = {
   voltage: 400,
@@ -90,5 +91,34 @@ describe('Bess — harmonics', () => {
     const Q = v.powerReactive;
     const D = (v.powerDistortion as number) ?? 0;
     expect(S ** 2).toBeCloseTo(P ** 2 + Q ** 2 + D ** 2, 0);
+  });
+});
+
+describe('Bess — BESS-specific values', () => {
+  it('stateOfCharge matches initial SOC', () => {
+    const b = new Bess(BASE_PARAMS);
+    expect(b.calculate().stateOfCharge).toBe(BASE_PARAMS.socInitial);
+  });
+
+  it('grid current > 0 when delivering power', () => {
+    const b = new Bess({ ...BASE_PARAMS, powerSetpoint: 50 });
+    expect(b.calculate().currentGrid).toBeGreaterThan(0);
+  });
+
+  it('operating mode reflects charging/discharging', () => {
+    const bCharge = new Bess({ ...BASE_PARAMS, powerSetpoint: -50 });
+    const bDischarge = new Bess({ ...BASE_PARAMS, powerSetpoint: 50 });
+    expect(bCharge.calculate().operatingMode).toContain('Charging');
+    expect(bDischarge.calculate().operatingMode).toContain('Discharging');
+  });
+
+  it('waveform data has correct shape', () => {
+    const b = new Bess(BASE_PARAMS);
+    testWaveformDataShape(b);
+  });
+
+  it('power calculation data has correct shape', () => {
+    const b = new Bess(BASE_PARAMS);
+    testPowerCalcDataShape(b);
   });
 });

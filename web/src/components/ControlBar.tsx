@@ -63,7 +63,7 @@ export function ControlBar({
             {visibleParams.map(config => {
               // Toggle / select parameters
               if (config.options) {
-                const currentValue = params[config.key] as string;
+                const currentValue = (params as unknown as Record<string, number | string | boolean>)[config.key] as string;
                 const currentIndex = config.options.findIndex(opt => opt.value === currentValue);
                 return (
                   <div key={config.key} className="space-y-1">
@@ -72,7 +72,7 @@ export function ControlBar({
                       {config.options.map((option, idx) => (
                         <button
                           key={option.value}
-                          onClick={() => onParamChange(config.key, option.value as any)}
+                          onClick={() => onParamChange(config.key, option.value as number)}
                           className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-all
                             ${currentIndex === idx
                               ? 'bg-primary-500 text-white'
@@ -88,7 +88,7 @@ export function ControlBar({
               }
 
               // Slider parameters
-              const displayValue = (dragValue?.key === config.key ? dragValue.value : params[config.key]) as number;
+              const displayValue = (dragValue?.key === config.key ? dragValue.value : (params as unknown as Record<string, number | string | boolean>)[config.key]) as number;
               if (displayValue === undefined) return null;
 
               const isLoadResistance = config.key === 'resistanceLoad';
@@ -136,7 +136,7 @@ export function ControlBar({
           <div className="text-white font-semibold">Parameters</div>
           <div className="flex gap-3 text-xs">
             {visibleParams.slice(0, 4).map(config => {
-              const value = dragValue?.key === config.key ? dragValue.value : params[config.key] as number;
+              const value = dragValue?.key === config.key ? dragValue.value : (params as unknown as Record<string, number | string | boolean>)[config.key] as number;
               if (value === undefined) return null;
               return (
                 <div key={config.key} className="flex items-center gap-1">
@@ -153,19 +153,22 @@ export function ControlBar({
         <div className="flex items-center gap-3">
           {isBess && (
             <div className="px-2 py-1 rounded text-xs font-medium bg-slate-700/50 text-slate-300 border border-slate-600/50">
-              Rated: {params.powerRated} kVA
+              Rated: {(params as unknown as Record<string, number | string | boolean>).powerRated} kVA
             </div>
           )}
-          {isBess && values && 'operatingMode' in values && (
-            <div className={`px-2 py-1 rounded text-xs font-medium ${
-              (values.operatingMode as string).includes('Discharging') ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
-              (values.operatingMode as string).includes('Charging') ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' :
-              (values.operatingMode as string).includes('Reactive') ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' :
-              'bg-slate-500/20 text-slate-400 border border-slate-500/50'
-            }`}>
-              {values.operatingMode}
-            </div>
-          )}
+          {isBess && values && 'operatingMode' in values && (() => {
+            const mode = (values as unknown as Record<string, number | string | boolean>).operatingMode as string;
+            return (
+              <div className={`px-2 py-1 rounded text-xs font-medium ${
+                mode.includes('Discharging') ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
+                mode.includes('Charging') ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' :
+                mode.includes('Reactive') ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' :
+                'bg-slate-500/20 text-slate-400 border border-slate-500/50'
+              }`}>
+                {mode}
+              </div>
+            );
+          })()}
           {showLoadDisconnect && (
             <button
               onClick={(e) => { e.stopPropagation(); onLoadDisconnectToggle(); }}

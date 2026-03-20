@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -54,138 +54,143 @@ export function PowerCalculation({
   const displacementPF = values.displacementPowerFactor;
   const truePF = values.truePowerFactor;
 
-  const timeMs = powerCalcData.time.map(t => (t * 1000).toFixed(1));
+  const timeMs = useMemo(() => powerCalcData.time.map(t => (t * 1000).toFixed(1)), [powerCalcData.time]);
 
-  // Calculate total energy transferred (integral of power over time)
-  // Use trapezoidal rule: E = ∫p(t)dt ≈ Σ[(p[i] + p[i+1])/2 * Δt]
-  let energyPositive = 0; // Energy delivered to load (Joules)
-  let energyNegative = 0; // Energy returned from load (Joules)
-  
-  // Calculate cumulative energy curve E(t) = ∫₀ᵗ p(τ) dτ
-  const energyCumulative = new Array(powerCalcData.time.length);
-  energyCumulative[0] = 0;
-  
-  for (let i = 0; i < powerCalcData.time.length - 1; i++) {
-    const dt = powerCalcData.time[i + 1] - powerCalcData.time[i]; // seconds
-    const p1 = powerCalcData.powerInstantaneous[i];
-    const p2 = powerCalcData.powerInstantaneous[i + 1];
-    const avgPower = (p1 + p2) / 2;
-    const energySegment = avgPower * dt; // Joules
+  const { energyPositive, energyNegative, energyNet } = useMemo(() => {
+    // Calculate total energy transferred (integral of power over time)
+    // Use trapezoidal rule: E = ∫p(t)dt ≈ Σ[(p[i] + p[i+1])/2 * Δt]
+    let energyPositive = 0; // Energy delivered to load (Joules)
+    let energyNegative = 0; // Energy returned from load (Joules)
     
-    // Accumulate for cumulative curve
-    energyCumulative[i + 1] = energyCumulative[i] + energySegment;
-    
-    // Track positive/negative energy separately
-    if (energySegment > 0) {
-      energyPositive += energySegment;
-    } else {
-      energyNegative += Math.abs(energySegment);
-    }
-  }
-  
-  const energyNet = energyPositive - energyNegative; // Net energy transfer
-  
-  // Also calculate energy from magnetizing power if available
-  let energyMagnetizing: number[] | null = null;
-  if (side === 'primary' && powerCalcData.powerMagnetizing) {
-    energyMagnetizing = new Array(powerCalcData.time.length);
-    energyMagnetizing[0] = 0;
+    // Calculate cumulative energy curve E(t) = ∫₀ᵗ p(τ) dτ
+    const energyCumulative = new Array(powerCalcData.time.length);
+    energyCumulative[0] = 0;
     
     for (let i = 0; i < powerCalcData.time.length - 1; i++) {
-      const dt = powerCalcData.time[i + 1] - powerCalcData.time[i];
-      const pMag1 = powerCalcData.powerMagnetizing[i];
-      const pMag2 = powerCalcData.powerMagnetizing[i + 1];
-      const avgPowerMag = (pMag1 + pMag2) / 2;
-      energyMagnetizing[i + 1] = energyMagnetizing[i] + avgPowerMag * dt;
+      const dt = powerCalcData.time[i + 1] - powerCalcData.time[i]; // seconds
+      const p1 = powerCalcData.powerInstantaneous[i];
+      const p2 = powerCalcData.powerInstantaneous[i + 1];
+      const avgPower = (p1 + p2) / 2;
+      const energySegment = avgPower * dt; // Joules
+      
+      // Accumulate for cumulative curve
+      energyCumulative[i + 1] = energyCumulative[i] + energySegment;
+      
+      // Track positive/negative energy separately
+      if (energySegment > 0) {
+        energyPositive += energySegment;
+      } else {
+        energyNegative += Math.abs(energySegment);
+      }
     }
-  }
+    
+    const energyNet = energyPositive - energyNegative; // Net energy transfer
+    
+    // Also calculate energy from magnetizing power if available
+    let energyMagnetizing: number[] | null = null;
+    if (side === 'primary' && powerCalcData.powerMagnetizing) {
+      energyMagnetizing = new Array(powerCalcData.time.length);
+      energyMagnetizing[0] = 0;
+      
+      for (let i = 0; i < powerCalcData.time.length - 1; i++) {
+        const dt = powerCalcData.time[i + 1] - powerCalcData.time[i];
+        const pMag1 = powerCalcData.powerMagnetizing[i];
+        const pMag2 = powerCalcData.powerMagnetizing[i + 1];
+        const avgPowerMag = (pMag1 + pMag2) / 2;
+        energyMagnetizing[i + 1] = energyMagnetizing[i] + avgPowerMag * dt;
+      }
+    }
 
-  // Helper to create constant reference lines
-  const createReferenceLine = (value: number) => 
-    Array(powerCalcData.time.length).fill(value);
+    return { energyPositive, energyNegative, energyCumulative, energyNet, energyMagnetizing };
+  }, [powerCalcData, side]);
 
-  const powerData = {
-    labels: timeMs,
-    datasets: [
-      {
-        label: 'p(t) = v(t) × i(t)',
-        data: powerCalcData.powerInstantaneous,
-        borderColor: '#10b981',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        backgroundColor: (context: any) => {
-          const chart = context.chart;
-          const { chartArea } = chart;
-          if (!chartArea) return 'rgba(16, 185, 129, 0.4)';
-          
-          const value = context.parsed?.y ?? 0;
-          return value >= 0 
-            ? 'rgba(16, 185, 129, 0.4)'  // Slightly more opaque to emphasize area = energy
-            : 'rgba(245, 158, 11, 0.4)';
-        },
-        borderWidth: 2.5,
-        pointRadius: 0,
-        fill: 'origin',
-        tension: 0.4,
-        segment: {
+  const powerData = useMemo(() => {
+    const createReferenceLine = (value: number) => 
+      Array(powerCalcData.time.length).fill(value);
+
+    return ({
+      labels: timeMs,
+      datasets: [
+        {
+          label: 'p(t) = v(t) × i(t)',
+          data: powerCalcData.powerInstantaneous,
+          borderColor: '#10b981',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          backgroundColor: (ctx: any) => {
-            const value = ctx.p1.parsed.y;
+          backgroundColor: (context: any) => {
+            const chart = context.chart;
+            const { chartArea } = chart;
+            if (!chartArea) return 'rgba(16, 185, 129, 0.4)';
+            
+            const value = context.parsed?.y ?? 0;
             return value >= 0 
-              ? 'rgba(16, 185, 129, 0.4)'
+              ? 'rgba(16, 185, 129, 0.4)'  // Slightly more opaque to emphasize area = energy
               : 'rgba(245, 158, 11, 0.4)';
           },
+          borderWidth: 2.5,
+          pointRadius: 0,
+          fill: 'origin',
+          tension: 0.4,
+          segment: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            backgroundColor: (ctx: any) => {
+              const value = ctx.p1.parsed.y;
+              return value >= 0 
+                ? 'rgba(16, 185, 129, 0.4)'
+                : 'rgba(245, 158, 11, 0.4)';
+            },
+          },
         },
-      },
-      // Add magnetizing power overlay (only for primary side)
-      ...(side === 'primary' && powerCalcData.powerMagnetizing ? [{
-        label: 'p_mag(t) = v(t) × i_mag(t)',
-        data: powerCalcData.powerMagnetizing,
-        borderColor: '#f59e0b',
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        borderDash: [5, 5],
-        pointRadius: 0,
-        fill: false,
-        tension: 0.4,
-      }] : []),
-      // Add reference lines for P, Q, S
-      ...(showReferenceLinesState.P ? [{
-        label: 'P (Active Power)',
-        data: createReferenceLine(powerCalcData.powerActive),
-        borderColor: '#10b981',
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderDash: [8, 4],
-        pointRadius: 0,
-        fill: false,
-        tension: 0,
-      }] : []),
-      ...(showReferenceLinesState.Q ? [{
-        label: 'Q (Reactive Power)',
-        data: createReferenceLine(powerCalcData.powerReactive),
-        borderColor: '#6366f1',
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderDash: [8, 4],
-        pointRadius: 0,
-        fill: false,
-        tension: 0,
-      }] : []),
-      ...(showReferenceLinesState.S ? [{
-        label: 'S (Apparent Power)',
-        data: createReferenceLine(powerCalcData.powerApparent),
-        borderColor: '#8b5cf6',
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderDash: [8, 4],
-        pointRadius: 0,
-        fill: false,
-        tension: 0,
-      }] : []),
-    ],
-  };
+        // Add magnetizing power overlay (only for primary side)
+        ...(side === 'primary' && powerCalcData.powerMagnetizing ? [{
+          label: 'p_mag(t) = v(t) × i_mag(t)',
+          data: powerCalcData.powerMagnetizing,
+          borderColor: '#f59e0b',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false,
+          tension: 0.4,
+        }] : []),
+        // Add reference lines for P, Q, S
+        ...(showReferenceLinesState.P ? [{
+          label: 'P (Active Power)',
+          data: createReferenceLine(powerCalcData.powerActive),
+          borderColor: '#10b981',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+        }] : []),
+        ...(showReferenceLinesState.Q ? [{
+          label: 'Q (Reactive Power)',
+          data: createReferenceLine(powerCalcData.powerReactive),
+          borderColor: '#6366f1',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+        }] : []),
+        ...(showReferenceLinesState.S ? [{
+          label: 'S (Apparent Power)',
+          data: createReferenceLine(powerCalcData.powerApparent),
+          borderColor: '#8b5cf6',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+        }] : []),
+      ],
+    });
+  }, [powerCalcData, showReferenceLinesState, side, timeMs]);
 
-  const powerOptions = {
+  const powerOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -252,7 +257,7 @@ export function PowerCalculation({
         },
       },
     },
-  };
+  }), []);
 
   return (
     <div className="glass-dark rounded-xl p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">

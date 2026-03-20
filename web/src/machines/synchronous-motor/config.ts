@@ -77,7 +77,7 @@ export const SYNC_MOTOR_PARAMETERS: MachineParameter[] = [
   ...HARMONIC_PARAMETERS,
 ];
 
-export const SYNC_MOTOR_PRESETS: MachinePreset[] = [
+export const SYNC_MOTOR_PRESETS: MachinePreset<SynchronousMotorParams>[] = [
   {
     name: 'Under-Excited',
     description: 'Low excitation - lagging PF',

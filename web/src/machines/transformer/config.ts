@@ -112,7 +112,7 @@ export const TRANSFORMER_PARAMETERS: MachineParameter[] = [
 /**
  * Transformer presets for quick configuration
  */
-export const TRANSFORMER_PRESETS: MachinePreset[] = [
+export const TRANSFORMER_PRESETS: MachinePreset<TransformerParams>[] = [
   {
     name: 'Small Transformer',
     description: '230V household transformer',

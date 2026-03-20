@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { Scatter } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
+  type Chart,
+  type TooltipItem,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -121,7 +123,7 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
   // Plugin to draw angle arc - memoized with dependencies
   const angleArcPlugin = useMemo(() => ({
     id: 'angleArc',
-    afterDatasetsDraw: (chart: any) => {
+    afterDatasetsDraw: (chart: Chart) => {
       const ctx = chart.ctx;
       const xScale = chart.scales.x;
       const yScale = chart.scales.y;
@@ -185,7 +187,7 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
         padding: 12,
         displayColors: true,
         callbacks: {
-          label: (context: any) => {
+          label: (context: TooltipItem<'scatter'>) => {
             const label = context.dataset.label || '';
             const value = label.includes('Active') ? P.toFixed(2) + ' W'
                         : label.includes('Reactive') ? Q.toFixed(2) + ' VAR'
@@ -262,7 +264,7 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
       </div>
       
       <div className="flex-1 min-h-0">
-        <Scatter key={phaseAngleDeg} data={data} options={options} plugins={[angleArcPlugin]} />
+        <Scatter data={data} options={options} plugins={[angleArcPlugin]} />
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">

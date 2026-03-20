@@ -216,8 +216,11 @@ export class InductionMotor implements IMachine {
    * Used for torque-slip curve and operating point calculation
    */
   private calculateTorque(slip: number): number {
-    const { voltage: V, frequency: f, poles: p, resistanceStator: R1, reactanceStator: X1,
+    const { voltage: V_line, frequency: f, poles: p, resistanceStator: R1, reactanceStator: X1,
             resistanceRotor: R2, reactanceRotor: X2, reactanceMag: Xm } = this.params;
+
+    // Convert line voltage to phase voltage (Y-connection assumed)
+    const V = V_line / Math.sqrt(3);
     
     if (slip < 0.0001) return 0;
     

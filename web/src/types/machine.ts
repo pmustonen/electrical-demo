@@ -95,9 +95,6 @@ export interface MachineParams {
 
   /** 7th harmonic current fraction (0 = off, 0.5 = 50% of fundamental) */
   harmonic7: number;
-
-  /** Allow machine-specific parameters via dynamic UI (params[config.key]) */
-  [key: string]: number | string | boolean;
 }
 
 /**
@@ -140,9 +137,6 @@ export interface MachineValues {
 
   /** True power factor — displacement × distortion */
   truePowerFactor: number;
-
-  /** Allow machine-specific values via dynamic access */
-  [key: string]: number | string | boolean;
 }
 
 /**
@@ -186,7 +180,7 @@ export interface MachineParameter {
 /**
  * Preset configuration for quick machine setup
  */
-export interface MachinePreset {
+export interface MachinePreset<P extends MachineParams = MachineParams> {
   /** Preset name for display */
   name: string;
   
@@ -194,7 +188,7 @@ export interface MachinePreset {
   description?: string;
   
   /** Parameter values for this preset */
-  params: Partial<MachineParams>;
+  params: Partial<P>;
 }
 
 /**
@@ -214,5 +208,5 @@ export interface MachineConfig<P extends MachineParams = MachineParams> {
   parameters: MachineParameter[];
   
   /** Optional presets for quick configuration */
-  presets?: MachinePreset[];
+  presets?: MachinePreset<P>[];
 }

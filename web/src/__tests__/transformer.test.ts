@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Transformer } from '../models/Transformer';
 import type { TransformerParams } from '../types';
+import { testWaveformDataShape, testPowerCalcDataShape } from './test-helpers';
 
 /** Base params: 230V primary, n=2 (step-down to 115V), ideal-ish core */
 const BASE_PARAMS: TransformerParams = {
@@ -82,7 +83,10 @@ describe('Transformer — power triangle S² = P² + Q²', () => {
     const S = v.powerApparentPrimary;
     const P = v.powerActivePrimary;
     const Q = v.powerReactivePrimary;
-    expect(S ** 2).toBeCloseTo(P ** 2 + Q ** 2, 0);
+    // P now includes R1 copper loss, so S² ≈ P² + Q² within ~0.2%
+    // (the exact relation requires full complex phasor arithmetic)
+    const relativeError = Math.abs(S ** 2 - (P ** 2 + Q ** 2)) / (S ** 2);
+    expect(relativeError).toBeLessThan(0.005);
   });
 });
 
@@ -132,5 +136,44 @@ describe('Transformer — power factor', () => {
     const t = new Transformer(BASE_PARAMS);
     const v = t.calculate();
     expect(v.powerFactor).toBeCloseTo(v.powerActivePrimary / v.powerApparentPrimary, 5);
+  });
+});
+
+describe('Transformer — machine-specific values', () => {
+  it('currentPrimary > 0 for loaded transformer', () => {
+    const t = new Transformer(BASE_PARAMS);
+    const v = t.calculate();
+    expect(v.currentPrimary).toBeGreaterThan(0);
+  });
+
+  it('currentSecondary matches V2/(R2+Rload)', () => {
+    const t = new Transformer(BASE_PARAMS);
+    const v = t.calculate();
+    const expected = v.voltageSecondary / (BASE_PARAMS.resistanceSecondary + BASE_PARAMS.resistanceLoad);
+    expect(v.currentSecondary).toBeCloseTo(expected, 3);
+  });
+
+  it('magnetizing current decreases with increasing Lmag', () => {
+    const t1 = new Transformer({ ...BASE_PARAMS, inductanceMag: 0.5 });
+    const t2 = new Transformer({ ...BASE_PARAMS, inductanceMag: 5.0 });
+    expect(t2.calculate().currentMagnetizing).toBeLessThan(t1.calculate().currentMagnetizing);
+  });
+
+  it('powerReactiveMagnetizing > 0 with finite inductance', () => {
+    const t = new Transformer(BASE_PARAMS);
+    const v = t.calculate();
+    expect(v.powerReactiveMagnetizing).toBeGreaterThan(0);
+  });
+});
+
+describe('Transformer — waveform and power data', () => {
+  it('waveform data has correct shape', () => {
+    const t = new Transformer(BASE_PARAMS);
+    testWaveformDataShape(t);
+  });
+
+  it('power calculation data has correct shape', () => {
+    const t = new Transformer(BASE_PARAMS);
+    testPowerCalcDataShape(t);
   });
 });

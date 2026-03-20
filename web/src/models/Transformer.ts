@@ -116,7 +116,8 @@ export class Transformer implements IMachine {
       // Magnetizing current
       Imag = Vmag / Xmag;
       
-      // Total primary current (phasor sum)
+      // Total primary current (quadrature sum: valid because I_reflected is in-phase
+      // with V_mag while I_mag lags V_mag by 90° for a purely resistive load)
       const I1_new = Math.sqrt(I2_reflected ** 2 + Imag ** 2);
       
       // Check convergence
@@ -127,14 +128,7 @@ export class Transformer implements IMachine {
       I1 = I1_new;
     }
     
-    const Iload = I2;
-
-    // Power calculations - Primary side
-    const P1 = V1 * I2_reflected;  // Active power (resistive component)
-    const Q1 = V1 * Imag;          // Reactive power (magnetizing)
-    const S1 = V1 * I1;            // Apparent power
-
-    // Power calculations - Secondary side
+    // Power calculations - Secondary side  
     const P2 = V2 * I2;
     const Q2 = 0;  // No reactive component on secondary (resistive load)
     const S2 = V2 * I2;
@@ -143,15 +137,20 @@ export class Transformer implements IMachine {
     const Pload = I2 ** 2 * Rload;
 
     // Magnetizing reactive power
-    const Qmag = Q1;
+    const Qmag = Vmag * Imag;
+
+    // Power calculations - Primary side
+    const P1 = I1 ** 2 * R1 + Vmag * I2_reflected;  // R1 loss + power transferred through core
+    const Q1 = Qmag;
+    const S1 = V1 * I1;            // Apparent power
 
     // Power factor and phase angle (displacement, from fundamental only)
     const powerFactor = P1 / S1;
     // Phase angle for inductive load (negative because current lags voltage)
-    const phaseAngle = -Math.acos(powerFactor);
+    const phaseAngle = -Math.acos(Math.min(1, powerFactor));
     
-    // Efficiency (output power / input power)
-    const efficiency = P2 / P1;
+    // Efficiency (output power to load / total input power)
+    const efficiency = Pload / P1;
 
     // Harmonic metrics
     const h3 = this.params.harmonic3;
@@ -167,7 +166,7 @@ export class Transformer implements IMachine {
       currentPrimary: harmonics.I_total_rms,
       currentSecondary: I2,
       currentMagnetizing: Imag,
-      currentLoad: Iload,
+      currentLoad: I2,
       powerActivePrimary: P1,
       powerReactivePrimary: Q1,
       powerApparentPrimary: powerApparentTrue,

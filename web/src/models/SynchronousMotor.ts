@@ -78,10 +78,11 @@ export class SynchronousMotor implements IMachine {
     const n_sync = (120 * f) / p; // RPM
     const omega_sync = (2 * Math.PI * n_sync) / 60; // rad/s
 
-    // Back EMF is proportional to excitation current
-    // Typical: E_f = k_f * I_f, where k_f depends on machine design
-    // For this model, assume k_f gives reasonable E_f range
-    const k_f = V / 5; // Calibration factor: I_f=5A gives E_f≈V (unity PF)
+    // Back EMF is proportional to excitation current (linear model)
+    // Real machines show saturation at high excitation — this simplified model
+    // is adequate for demonstrating the P-Q relationship and V-curve behavior.
+    // Calibration: I_f = 5A produces E_f ≈ V (unity power factor at rated load)
+    const k_f = V / 5;
     const E_f = k_f * I_f;
 
     // Find load angle δ where electromagnetic torque equals load torque
@@ -90,9 +91,10 @@ export class SynchronousMotor implements IMachine {
     
     const sin_delta = (T_load * omega_sync * X_s) / (3 * V * E_f);
     
-    // Check if load torque is too high (motor can't pull it)
+    // Pull-out torque protection: limit sin(δ) to 0.95 (≈72°) to prevent
+    // numerical instability near the theoretical maximum (δ = 90°).
+    // In a real machine, exceeding pull-out causes loss of synchronism.
     if (Math.abs(sin_delta) > 0.95) {
-      // Motor approaching pull-out torque - limit to prevent instability
       const delta = Math.asin(Math.sign(sin_delta) * 0.95);
       const T_em = (3 * V * E_f * Math.sin(delta)) / (omega_sync * X_s);
       

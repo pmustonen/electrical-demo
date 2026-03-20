@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SynchronousMotor } from '../models/SynchronousMotor';
 import type { SynchronousMotorParams } from '../types';
+import { testWaveformDataShape, testPowerCalcDataShape } from './test-helpers';
 
 const BASE_PARAMS: SynchronousMotorParams = {
   voltage: 400,
@@ -93,5 +94,34 @@ describe('SynchronousMotor — harmonics', () => {
     const Q = v.powerReactive;
     const D = (v.powerDistortion as number) ?? 0;
     expect(S ** 2).toBeCloseTo(P ** 2 + Q ** 2 + D ** 2, 0);
+  });
+});
+
+describe('SynchronousMotor — motor-specific values', () => {
+  it('load angle > 0 under load', () => {
+    const m = new SynchronousMotor(BASE_PARAMS);
+    expect(m.calculate().loadAngle).toBeGreaterThan(0);
+  });
+
+  it('back EMF proportional to excitation current', () => {
+    const m1 = new SynchronousMotor({ ...BASE_PARAMS, excitationCurrent: 3 });
+    const m2 = new SynchronousMotor({ ...BASE_PARAMS, excitationCurrent: 6 });
+    const ratio = m2.calculate().backEMF / m1.calculate().backEMF;
+    expect(ratio).toBeCloseTo(2, 1);
+  });
+
+  it('armature current > 0', () => {
+    const m = new SynchronousMotor(BASE_PARAMS);
+    expect(m.calculate().currentArmature).toBeGreaterThan(0);
+  });
+
+  it('waveform data has correct shape', () => {
+    const m = new SynchronousMotor(BASE_PARAMS);
+    testWaveformDataShape(m);
+  });
+
+  it('power calculation data has correct shape', () => {
+    const m = new SynchronousMotor(BASE_PARAMS);
+    testPowerCalcDataShape(m);
   });
 });

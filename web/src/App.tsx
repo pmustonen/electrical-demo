@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMachine } from './hooks/useMachine';
-import type { MachineType } from './types';
+import type { MachineType, MachineParams } from './types';
 import { MachineSelector } from './components/MachineSelector';
 import { ControlBar } from './components/ControlBar';
 import { PowerTriangle } from './components/PowerTriangle';
@@ -25,7 +25,7 @@ function App() {
     setPowerCalcSide,
     powerCalcSide,
   } = useMachine(machineType, {
-    overrideParams: loadDisconnected ? { resistanceLoad: 1e9 } : undefined, // 1GΩ = open circuit
+    overrideParams: loadDisconnected ? { resistanceLoad: 1e9 } as unknown as Partial<MachineParams> : undefined, // 1GΩ = open circuit
   });
 
   const handleMachineChange = (newMachineType: MachineType) => {

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -35,7 +35,7 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
   const [axesFrozen, setAxesFrozen] = useState(false);
   const [showRMS, setShowRMS] = useState(true);
   const [showPhaseShift, setShowPhaseShift] = useState(false);
-  const frozenRangesRef = useRef<{
+  const [frozenRanges, setFrozenRanges] = useState<{
     voltage: { min: number; max: number };
     current: { min: number; max: number };
   } | null>(null);
@@ -47,13 +47,12 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
   const primaryLabel = is3Phase ? 'Phase A' : 'Primary';
   const secondaryLabel = 'Secondary'; // Not used for 3-phase systems
 
-  // Find zero-crossings of voltage and current for phase shift calculation
-  const getZeroCrossings = () => {
+  // Memoized zero-crossings calculation
+  const zeroCrossings = useMemo(() => {
     const voltages = viewMode === 'secondary' ? waveformData.v2 : waveformData.v1;
     const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
     const time = waveformData.time;
     
-    // Find first positive-going zero crossing for voltage
     let vZero = -1;
     for (let i = 1; i < voltages.length; i++) {
       if (voltages[i-1] <= 0 && voltages[i] > 0) {
@@ -62,7 +61,6 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
       }
     }
     
-    // Find first positive-going zero crossing for current
     let iZero = -1;
     for (let i = 1; i < currents.length; i++) {
       if (currents[i-1] <= 0 && currents[i] > 0) {
@@ -71,18 +69,12 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
       }
     }
     
-    // Calculate time difference and period
     let timeDiff = 0;
     let period = 0;
     if (vZero !== -1 && iZero !== -1) {
-      // Time difference (can be positive or negative)
       timeDiff = time[iZero] - time[vZero];
-      
-      // Period is total time divided by number of cycles (typically 2-3 cycles)
       const totalTime = time[time.length - 1] - time[0];
-      period = totalTime / 2; // Assume 2 cycles for better accuracy
-      
-      // Normalize time difference to be within -period/2 to +period/2
+      period = totalTime / 2;
       while (timeDiff > period / 2) timeDiff -= period;
       while (timeDiff < -period / 2) timeDiff += period;
     }
@@ -90,29 +82,28 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
     return {
       vZero,
       iZero,
-      timeDiff, // Keep sign! Positive = current leads, negative = current lags
+      timeDiff,
       period,
       found: vZero !== -1 && iZero !== -1,
     };
-  };
+  }, [viewMode, waveformData]);
 
-  // Calculate RMS values (Peak / √2)
-  const getRMSValues = () => {
+  // Memoized RMS values (Peak / √2)
+  const rmsValues = useMemo(() => {
     const v1Peak = Math.max(...waveformData.v1.map(Math.abs));
     const v2Peak = Math.max(...waveformData.v2.map(Math.abs));
     const i1Peak = Math.max(...waveformData.i1.map(Math.abs));
     const i2Peak = Math.max(...waveformData.i2.map(Math.abs));
-    
     return {
       v1: v1Peak / Math.sqrt(2),
       v2: v2Peak / Math.sqrt(2),
       i1: i1Peak / Math.sqrt(2),
       i2: i2Peak / Math.sqrt(2),
     };
-  };
+  }, [waveformData]);
 
-  // Calculate current data ranges based on visible data only
-  const getCurrentRanges = () => {
+  // Memoized axis ranges based on visible data
+  const currentRanges = useMemo(() => {
     let voltages: number[] = [];
     let currents: number[] = [];
     
@@ -148,25 +139,22 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
         max: currentMax + currentPadding 
       },
     };
-  };
+  }, [viewMode, waveformData]);
 
   // Handle freeze toggle - capture current ranges when freezing
   const handleFreezeToggle = () => {
     if (!axesFrozen) {
-      // Freezing: capture current ranges
-      frozenRangesRef.current = getCurrentRanges();
+      setFrozenRanges(currentRanges);
     } else {
-      // Unfreezing: clear frozen ranges
-      frozenRangesRef.current = null;
+      setFrozenRanges(null);
     }
     setAxesFrozen(!axesFrozen);
   };
 
-  const timeMs = waveformData.time.map(t => (t * 1000).toFixed(1));
+  const timeMs = useMemo(() => waveformData.time.map(t => (t * 1000).toFixed(1)), [waveformData.time]);
 
-  const getDatasets = () => {
+  const datasets = useMemo(() => {
     const datasets = [];
-    const rmsValues = getRMSValues();
     
     // Helper to create constant RMS line
     const createRMSLine = (value: number) => 
@@ -282,7 +270,7 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
     
     // Add zero-crossing markers for phase shift visualization
     if (showPhaseShift && viewMode !== 'both') {
-      const crossings = getZeroCrossings();
+      const crossings = zeroCrossings;
       
       if (crossings.found) {
         const voltageColor = viewMode === 'secondary' ? '#8b5cf6' : '#6366f1';
@@ -326,25 +314,25 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
     }
     
     return datasets;
-  };
+  }, [viewMode, showRMS, showPhaseShift, waveformData, rmsValues, zeroCrossings]);
 
-  const data = {
+  const data = useMemo(() => ({
     labels: timeMs,
-    datasets: getDatasets(),
-  };
+    datasets,
+  }), [timeMs, datasets]);
 
-  // Get axis ranges (frozen or auto-scaling)
-  const ranges = axesFrozen && frozenRangesRef.current 
-    ? frozenRangesRef.current 
-    : getCurrentRanges();
+  // Get axis ranges (frozen or auto-scaling) — uses state, not ref
+  const ranges = axesFrozen && frozenRanges ? frozenRanges : currentRanges;
+  // Destructure to avoid React Compiler misinterpreting ranges.current as ref access
+  const { voltage: voltageRange, current: currentRange } = ranges;
 
-  // Get axis colors based on view mode
-  const axisColors = {
-    voltage: viewMode === 'secondary' ? '#8b5cf6' : '#6366f1', // Purple for secondary, Blue for primary
-    current: viewMode === 'secondary' ? '#f59e0b' : '#10b981', // Orange for secondary, Green for primary
-  };
+  const options = useMemo(() => {
+    const axisColors = {
+      voltage: viewMode === 'secondary' ? '#8b5cf6' : '#6366f1',
+      current: viewMode === 'secondary' ? '#f59e0b' : '#10b981',
+    };
 
-  const options = {
+    return {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -394,8 +382,8 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
       'y-voltage': {
         type: 'linear' as const,
         position: 'left' as const,
-        min: ranges.voltage.min,
-        max: ranges.voltage.max,
+        min: voltageRange.min,
+        max: voltageRange.max,
         title: {
           display: true,
           text: 'Voltage (V)',
@@ -418,8 +406,8 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
       'y-current': {
         type: 'linear' as const,
         position: 'right' as const,
-        min: ranges.current.min,
-        max: ranges.current.max,
+        min: currentRange.min,
+        max: currentRange.max,
         title: {
           display: true,
           text: 'Current (A)',
@@ -440,7 +428,8 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
         },
       },
     },
-  };
+    };
+  }, [voltageRange, currentRange, viewMode]);
 
   return (
     <div className="glass-dark rounded-xl p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">
@@ -516,7 +505,7 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
 
       {/* Phase Angle Calculation Panel - Prominent when enabled */}
       {showPhaseShift && viewMode !== 'both' && (() => {
-        const crossings = getZeroCrossings();
+        const crossings = zeroCrossings;
         const angleCalc = (phaseAngle * 180 / Math.PI).toFixed(1);
         const angleMagnitude = Math.abs(parseFloat(angleCalc)).toFixed(1);
         

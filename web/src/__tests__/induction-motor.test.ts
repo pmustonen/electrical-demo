@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { InductionMotor } from '../models/InductionMotor';
 import type { InductionMotorParams } from '../types';
+import { testWaveformDataShape, testPowerCalcDataShape } from './test-helpers';
 
 const BASE_PARAMS: InductionMotorParams = {
   voltage: 400,
@@ -120,5 +121,33 @@ describe('InductionMotor — harmonics', () => {
     const Q = v.powerReactive;
     const D = (v.powerDistortion as number) ?? 0;
     expect(S ** 2).toBeCloseTo(P ** 2 + Q ** 2 + D ** 2, 0);
+  });
+});
+
+describe('InductionMotor — motor-specific values', () => {
+  it('electromagnetic torque > 0 under load', () => {
+    const m = new InductionMotor(BASE_PARAMS);
+    expect(m.calculate().torqueElectromagnetic).toBeGreaterThan(0);
+  });
+
+  it('output torque ≤ electromagnetic torque', () => {
+    const m = new InductionMotor(BASE_PARAMS);
+    const v = m.calculate();
+    expect(v.torqueOutput).toBeLessThanOrEqual(v.torqueElectromagnetic * 1.001);
+  });
+
+  it('stator current > 0', () => {
+    const m = new InductionMotor(BASE_PARAMS);
+    expect(m.calculate().currentStator).toBeGreaterThan(0);
+  });
+
+  it('waveform data has correct shape', () => {
+    const m = new InductionMotor(BASE_PARAMS);
+    testWaveformDataShape(m);
+  });
+
+  it('power calculation data has correct shape', () => {
+    const m = new InductionMotor(BASE_PARAMS);
+    testPowerCalcDataShape(m);
   });
 });

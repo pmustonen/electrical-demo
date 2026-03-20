@@ -72,7 +72,9 @@ export class Bess implements IMachine {
 
     // Convert to base units (W, var)
     const P_rated = P_rated_kW * 1000;
-    const S_rated = P_rated; // Assume rated apparent power equals rated active power
+    // Inverter rated apparent power: typically 10% above active power rating
+    // to allow simultaneous P and Q delivery
+    const S_rated = P_rated * 1.1;
     const P_requested = P_set_kW * 1000;
     const Q_requested = Q_set_kvar * 1000;
 
@@ -121,9 +123,10 @@ export class Bess implements IMachine {
     // Calculate apparent power
     const S = Math.sqrt(P_actual ** 2 + Q_actual ** 2);
     
-    // Phase angle: Negate to match convention (negative = lags/inductive, positive = leads/capacitive)
-    // Q > 0 (inductive) → atan2 gives +angle → negate to -angle (lags)
-    // Q < 0 (capacitive) → atan2 gives -angle → negate to +angle (leads)
+    // Phase angle convention (consistent with all machine models):
+    // Negative = current lags voltage (inductive), Positive = current leads (capacitive)
+    // Q > 0 (inductive) → atan2 > 0 → negate to get negative (lagging)
+    // Q < 0 (capacitive) → atan2 < 0 → negate to get positive (leading)
     const phi = -Math.atan2(Q_actual, P_actual);
 
     // Grid current and harmonic metrics (3-phase)
