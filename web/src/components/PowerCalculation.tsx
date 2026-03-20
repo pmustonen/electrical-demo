@@ -156,7 +156,7 @@ export function PowerCalculation({
         ...(showReferenceLinesState.P ? [{
           label: 'P (Active Power)',
           data: createReferenceLine(powerCalcData.powerActive),
-          borderColor: '#10b981',
+          borderColor: '#22d3ee',
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           borderDash: [8, 4],
@@ -167,7 +167,7 @@ export function PowerCalculation({
         ...(showReferenceLinesState.Q ? [{
           label: 'Q (Reactive Power)',
           data: createReferenceLine(powerCalcData.powerReactive),
-          borderColor: '#6366f1',
+          borderColor: '#f43f5e',
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           borderDash: [8, 4],
@@ -178,7 +178,7 @@ export function PowerCalculation({
         ...(showReferenceLinesState.S ? [{
           label: 'S (Apparent Power)',
           data: createReferenceLine(powerCalcData.powerApparent),
-          borderColor: '#8b5cf6',
+          borderColor: '#a855f7',
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           borderDash: [8, 4],
@@ -278,7 +278,7 @@ export function PowerCalculation({
               onClick={() => setShowReferenceLinesState(prev => ({ ...prev, P: !prev.P }))}
               className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
                 ${showReferenceLinesState.P 
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' 
+                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50' 
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               title="Toggle active power reference line"
@@ -289,7 +289,7 @@ export function PowerCalculation({
               onClick={() => setShowReferenceLinesState(prev => ({ ...prev, Q: !prev.Q }))}
               className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
                 ${showReferenceLinesState.Q 
-                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50' 
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' 
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               title="Toggle reactive power reference line"
@@ -300,7 +300,7 @@ export function PowerCalculation({
               onClick={() => setShowReferenceLinesState(prev => ({ ...prev, S: !prev.S }))}
               className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
                 ${showReferenceLinesState.S 
-                  ? 'bg-violet-500/20 text-violet-400 border border-violet-500/50' 
+                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' 
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               title="Toggle apparent power reference line"
@@ -344,21 +344,21 @@ export function PowerCalculation({
       <div className="mt-4 grid grid-cols-4 gap-2">
         <div className="metric-card">
           <div className="text-xs text-gray-400">P</div>
-          <div className="text-base font-bold text-accent-emerald tabular-nums">
+          <div className="text-base font-bold text-cyan-400 tabular-nums">
             {powerCalcData.powerActive.toFixed(1)}
           </div>
           <div className="text-xs text-gray-500">W</div>
         </div>
         <div className="metric-card">
           <div className="text-xs text-gray-400">Q</div>
-          <div className="text-base font-bold text-primary-400 tabular-nums">
+          <div className="text-base font-bold text-rose-400 tabular-nums">
             {powerCalcData.powerReactive.toFixed(1)}
           </div>
           <div className="text-xs text-gray-500">VAR</div>
         </div>
         <div className="metric-card">
           <div className="text-xs text-gray-400">S</div>
-          <div className="text-base font-bold text-accent-violet tabular-nums">
+          <div className="text-base font-bold text-purple-400 tabular-nums">
             {powerCalcData.powerApparent.toFixed(1)}
           </div>
           <div className="text-xs text-gray-500">VA</div>

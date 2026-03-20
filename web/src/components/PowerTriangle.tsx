@@ -57,8 +57,8 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
           { x: 0, y: 0 },
           { x: P, y: 0 },
         ],
-        borderColor: '#10b981',
-        backgroundColor: '#10b981',
+        borderColor: '#22d3ee',
+        backgroundColor: '#22d3ee',
         showLine: true,
         borderWidth: 4,
         pointRadius: 6,
@@ -70,8 +70,8 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
           { x: P, y: 0 },
           { x: P, y: Q },
         ],
-        borderColor: '#6366f1',
-        backgroundColor: '#6366f1',
+        borderColor: '#f43f5e',
+        backgroundColor: '#f43f5e',
         showLine: true,
         borderWidth: 4,
         pointRadius: 6,
@@ -84,8 +84,8 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
           { x: 0, y: 0 },
           { x: P, y: Q },
         ],
-        borderColor: '#8b5cf6',
-        backgroundColor: '#8b5cf6',
+        borderColor: '#a855f7',
+        backgroundColor: '#a855f7',
         showLine: true,
         borderWidth: 3,
         pointRadius: 6,
@@ -270,21 +270,21 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
       <div className="mt-4 grid grid-cols-3 gap-2">
         <div className="metric-card">
           <div className="text-xs text-gray-400">Active (P)</div>
-          <div className="text-lg font-bold text-accent-emerald tabular-nums">
+          <div className="text-lg font-bold text-cyan-400 tabular-nums">
             {P.toFixed(1)}
           </div>
           <div className="text-xs text-gray-500">W</div>
         </div>
         <div className="metric-card">
           <div className="text-xs text-gray-400">Reactive (Q)</div>
-          <div className="text-lg font-bold text-primary-400 tabular-nums">
+          <div className="text-lg font-bold text-rose-400 tabular-nums">
             {Q.toFixed(1)}
           </div>
           <div className="text-xs text-gray-500">VAR</div>
         </div>
         <div className="metric-card">
           <div className="text-xs text-gray-400">{hasHarmonics ? 'True S' : 'Apparent (S)'}</div>
-          <div className="text-lg font-bold text-accent-violet tabular-nums">
+          <div className="text-lg font-bold text-purple-400 tabular-nums">
             {S.toFixed(1)}
           </div>
           <div className="text-xs text-gray-500">VA</div>
