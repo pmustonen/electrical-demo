@@ -65,7 +65,8 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
 
     const vZero = vCrossings.length > 0 ? vCrossings[0] : -1;
 
-    // Find the current zero crossing nearest in time to vZero (within ±half period)
+    // Find the current zero crossing closest in absolute time to vZero —
+    // this ensures both dots land visually near each other on the chart.
     let iZero = -1;
     let timeDiff = 0;
     let period = 0;
@@ -73,18 +74,18 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
       const totalTime = time[time.length - 1] - time[0];
       period = totalTime / 2;
       const vTime = time[vZero];
-      let bestDiff = Infinity;
+      let minAbsDiff = Infinity;
       for (const idx of iCrossings) {
-        let diff = time[idx] - vTime;
-        // Wrap diff into ±half period so we compare within the same cycle
-        while (diff > period / 2) diff -= period;
-        while (diff < -period / 2) diff += period;
-        if (Math.abs(diff) < Math.abs(bestDiff)) {
-          bestDiff = diff;
+        const absDiff = Math.abs(time[idx] - vTime);
+        if (absDiff < minAbsDiff) {
+          minAbsDiff = absDiff;
           iZero = idx;
         }
       }
-      timeDiff = bestDiff;
+      timeDiff = time[iZero] - vTime;
+      // Wrap into ±half period for the phase angle display value only
+      while (timeDiff > period / 2) timeDiff -= period;
+      while (timeDiff < -period / 2) timeDiff += period;
     }
     
     return {
