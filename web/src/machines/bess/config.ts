@@ -130,68 +130,7 @@ export const BESS_PARAMETERS: MachineParameter[] = [
   ...HARMONIC_PARAMETERS,
 ];
 
-export const BESS_PRESETS: MachinePreset<BessParams>[] = [
-  {
-    name: 'Grid Support',
-    description: 'Pure reactive power for voltage support',
-    params: {
-      voltage: 400,
-      frequency: 50,
-      powerRated: 100,
-      energyCapacity: 200,
-      powerSetpoint: 0,
-      reactiveSetpoint: -50,
-      socInitial: 50,
-      efficiency: 95,
-      priorityMode: 'reactive' as const,
-    },
-  },
-  {
-    name: 'Peak Shaving',
-    description: 'Discharge at unity PF',
-    params: {
-      voltage: 400,
-      frequency: 50,
-      powerRated: 100,
-      energyCapacity: 200,
-      powerSetpoint: 80,
-      reactiveSetpoint: 0,
-      socInitial: 90,
-      efficiency: 95,
-      priorityMode: 'active' as const,
-    },
-  },
-  {
-    name: 'Load Shifting',
-    description: 'Charge during off-peak',
-    params: {
-      voltage: 400,
-      frequency: 50,
-      powerRated: 100,
-      energyCapacity: 200,
-      powerSetpoint: -60,
-      reactiveSetpoint: 0,
-      socInitial: 20,
-      efficiency: 95,
-      priorityMode: 'active' as const,
-    },
-  },
-  {
-    name: 'Four-Quadrant',
-    description: 'Discharge + grid support',
-    params: {
-      voltage: 400,
-      frequency: 50,
-      powerRated: 100,
-      energyCapacity: 200,
-      powerSetpoint: 50,
-      reactiveSetpoint: -40,
-      socInitial: 70,
-      efficiency: 95,
-      priorityMode: 'active' as const,
-    },
-  },
-];
+export const BESS_PRESETS: MachinePreset<BessParams>[] = [];
 
 export const BESS_CONFIG: MachineConfig<BessParams> = {
   type: 'bess',

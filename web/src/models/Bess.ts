@@ -32,8 +32,8 @@ export class Bess implements IMachine {
    */
   getMetadata(): MachineMetadata {
     return {
-      name: 'Battery Energy Storage',
-      description: 'Grid-forming inverter with independent P-Q control',
+      name: 'BESS / Inverter',
+      description: 'Battery inverter with independent P-Q control',
       icon: '🔋',
       category: 'rotating',
       supportsWaveforms: true,
