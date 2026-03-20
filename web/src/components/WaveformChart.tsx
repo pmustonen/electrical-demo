@@ -53,30 +53,38 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
     const currents = viewMode === 'secondary' ? waveformData.i2 : waveformData.i1;
     const time = waveformData.time;
     
-    let vZero = -1;
+    // Collect all positive-going zero crossings for voltage and current
+    const vCrossings: number[] = [];
+    const iCrossings: number[] = [];
     for (let i = 1; i < voltages.length; i++) {
-      if (voltages[i-1] <= 0 && voltages[i] > 0) {
-        vZero = i;
-        break;
-      }
+      if (voltages[i-1] <= 0 && voltages[i] > 0) vCrossings.push(i);
     }
-    
-    let iZero = -1;
     for (let i = 1; i < currents.length; i++) {
-      if (currents[i-1] <= 0 && currents[i] > 0) {
-        iZero = i;
-        break;
-      }
+      if (currents[i-1] <= 0 && currents[i] > 0) iCrossings.push(i);
     }
-    
+
+    const vZero = vCrossings.length > 0 ? vCrossings[0] : -1;
+
+    // Find the current zero crossing nearest in time to vZero (within ±half period)
+    let iZero = -1;
     let timeDiff = 0;
     let period = 0;
-    if (vZero !== -1 && iZero !== -1) {
-      timeDiff = time[iZero] - time[vZero];
+    if (vZero !== -1 && iCrossings.length > 0) {
       const totalTime = time[time.length - 1] - time[0];
       period = totalTime / 2;
-      while (timeDiff > period / 2) timeDiff -= period;
-      while (timeDiff < -period / 2) timeDiff += period;
+      const vTime = time[vZero];
+      let bestDiff = Infinity;
+      for (const idx of iCrossings) {
+        let diff = time[idx] - vTime;
+        // Wrap diff into ±half period so we compare within the same cycle
+        while (diff > period / 2) diff -= period;
+        while (diff < -period / 2) diff += period;
+        if (Math.abs(diff) < Math.abs(bestDiff)) {
+          bestDiff = diff;
+          iZero = idx;
+        }
+      }
+      timeDiff = bestDiff;
     }
     
     return {
