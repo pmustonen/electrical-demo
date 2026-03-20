@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Scatter } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -120,10 +120,14 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
   const yMin = Q < 0 ? -maxValue : 0;
   const yMax = maxValue;
 
-  // Plugin to draw angle arc - memoized with dependencies
+  // Plugin to draw angle arc - stable reference, reads angle from a ref
+  const angleRef = useRef({ phaseAngle, phaseAngleDeg });
+  angleRef.current = { phaseAngle, phaseAngleDeg };
+
   const angleArcPlugin = useMemo(() => ({
     id: 'angleArc',
     afterDatasetsDraw: (chart: Chart) => {
+      const { phaseAngle, phaseAngleDeg } = angleRef.current;
       const ctx = chart.ctx;
       const xScale = chart.scales.x;
       const yScale = chart.scales.y;
@@ -157,7 +161,8 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
       
       ctx.restore();
     },
-  }), [phaseAngle, phaseAngleDeg]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
 
   const options = {
     responsive: true,
