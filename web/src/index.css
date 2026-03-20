@@ -24,7 +24,7 @@
   }
   
   .metric-card {
-    @apply glass-dark rounded-lg px-4 py-3;
+    @apply glass-dark rounded-lg px-2 py-2 lg:px-4 lg:py-3;
   }
 }
 

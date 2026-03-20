@@ -255,7 +255,7 @@ export function PowerTriangle({ values, machineType }: PowerTriangleProps) {
   };
 
   return (
-    <div className="glass-dark rounded-xl p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">
+    <div className="glass-dark rounded-xl p-3 lg:p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">
       <div className="mb-3">
         <h2 className="text-base font-bold text-white">Power Triangle</h2>
         {is3Phase && (

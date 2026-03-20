@@ -129,13 +129,13 @@ export function ControlBar({
       {/* Collapsed bar — always visible, click to toggle */}
       <div
         onClick={onToggle}
-        className="glass-dark px-6 py-3 cursor-pointer hover:bg-white/5 transition-colors
+        className="glass-dark px-3 lg:px-6 py-2 lg:py-3 cursor-pointer hover:bg-white/5 transition-colors
                    flex items-center justify-between"
       >
-        <div className="flex items-center gap-4">
-          <div className="text-white font-semibold">Parameters</div>
-          <div className="flex gap-3 text-xs">
-            {visibleParams.slice(0, 4).map(config => {
+        <div className="flex items-center gap-2 lg:gap-4 min-w-0">
+          <div className="text-white font-semibold text-sm lg:text-base flex-shrink-0">Parameters</div>
+          <div className="hidden sm:flex gap-3 text-xs min-w-0">
+            {visibleParams.slice(0, 3).map(config => {
               const value = dragValue?.key === config.key ? dragValue.value : (params as unknown as Record<string, number | string | boolean>)[config.key] as number;
               if (value === undefined) return null;
               return (
@@ -150,16 +150,16 @@ export function ControlBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {isBess && (
-            <div className="px-2 py-1 rounded text-xs font-medium bg-slate-700/50 text-slate-300 border border-slate-600/50">
+            <div className="hidden sm:block px-2 py-1.5 rounded text-xs font-medium bg-slate-700/50 text-slate-300 border border-slate-600/50">
               Rated: {(params as unknown as Record<string, number | string | boolean>).powerRated} kVA
             </div>
           )}
           {isBess && values && 'operatingMode' in values && (() => {
             const mode = (values as unknown as Record<string, number | string | boolean>).operatingMode as string;
             return (
-              <div className={`px-2 py-1 rounded text-xs font-medium ${
+              <div className={`hidden sm:block px-2 py-1.5 rounded text-xs font-medium ${
                 mode.includes('Discharging') ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
                 mode.includes('Charging') ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' :
                 mode.includes('Reactive') ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' :
@@ -172,20 +172,20 @@ export function ControlBar({
           {showLoadDisconnect && (
             <button
               onClick={(e) => { e.stopPropagation(); onLoadDisconnectToggle(); }}
-              className={`px-3 py-1 glass rounded transition-colors text-xs font-medium border
+              className={`px-2 lg:px-3 py-1.5 glass rounded transition-colors text-xs font-medium border min-h-[36px]
                 ${loadDisconnected
                   ? 'bg-red-500/20 text-red-400 border-red-500/50'
                   : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
                 }`}
             >
-              {loadDisconnected ? '⚡ No Load' : '🔌 Load Connected'}
+              {loadDisconnected ? '⚡ No Load' : '🔌 Load'}
             </button>
           )}
           {presets.map(preset => (
             <button
               key={preset.name}
               onClick={(e) => { e.stopPropagation(); onLoadPreset(preset.name); }}
-              className="px-3 py-1 glass rounded hover:bg-primary-500/20 transition-colors text-xs text-primary-400 border border-primary-500/30"
+              className="px-2 lg:px-3 py-1.5 glass rounded hover:bg-primary-500/20 transition-colors text-xs text-primary-400 border border-primary-500/30 min-h-[36px]"
               title={preset.description || `Load ${preset.name} preset`}
             >
               {preset.name}
@@ -193,12 +193,12 @@ export function ControlBar({
           ))}
           <button
             onClick={(e) => { e.stopPropagation(); onReset(); }}
-            className="px-3 py-1 glass rounded hover:bg-white/10 transition-colors text-xs text-gray-300"
+            className="px-2 lg:px-3 py-1.5 glass rounded hover:bg-white/10 transition-colors text-xs text-gray-300 min-h-[36px]"
           >
             Reset
           </button>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 text-gray-400 transition-transform duration-300 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

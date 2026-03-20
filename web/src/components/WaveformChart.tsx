@@ -441,15 +441,15 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
   }, [voltageRange, currentRange, viewMode]);
 
   return (
-    <div className="glass-dark rounded-xl p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-bold text-white">Voltage & Current Waveforms</h2>
+    <div className="glass-dark rounded-xl p-3 lg:p-5 h-full flex flex-col shadow-2xl border border-slate-700/50">
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h2 className="text-sm lg:text-base font-bold text-white flex-shrink-0">Waveforms</h2>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 flex-wrap justify-end">
           {/* Phase Shift Toggle */}
           <button
             onClick={() => setShowPhaseShift(!showPhaseShift)}
-            className={`px-3 py-1 glass rounded transition-all duration-200 text-xs font-medium flex items-center gap-1
+            className={`px-2 py-1.5 glass rounded transition-all duration-200 text-xs font-medium flex items-center gap-1 min-h-[32px]
               ${showPhaseShift 
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-lg shadow-amber-500/20' 
                 : 'text-gray-400 hover:text-amber-300 hover:bg-amber-500/10 hover:border hover:border-amber-500/30'
@@ -458,13 +458,13 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
             disabled={viewMode === 'both'}
           >
             <span className="text-base">∠</span>
-            <span>Phase Angle</span>
+            <span className="hidden sm:inline">Phase Angle</span>
           </button>
 
           {/* RMS Toggle */}
           <button
             onClick={() => setShowRMS(!showRMS)}
-            className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+            className={`px-2 py-1.5 glass rounded transition-colors text-xs font-medium min-h-[32px]
               ${showRMS 
                 ? 'bg-primary-500/20 text-primary-400 border border-primary-500/50' 
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -477,7 +477,7 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
           {/* Freeze Toggle */}
           <button
             onClick={handleFreezeToggle}
-            className={`px-2 py-1 glass rounded transition-colors text-xs font-medium
+            className={`px-2 py-1.5 glass rounded transition-colors text-xs font-medium min-h-[32px]
               ${axesFrozen 
                 ? 'bg-accent-orange/20 text-accent-orange border border-accent-orange/50' 
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -494,7 +494,7 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-all duration-200
+                  className={`px-2 py-1 rounded text-xs font-medium transition-all duration-200 min-h-[28px]
                     ${viewMode === mode 
                       ? 'bg-primary-500 text-white shadow-lg' 
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -508,7 +508,7 @@ export function WaveformChart({ waveformData, phaseAngle, machineType }: Wavefor
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-[180px]">
         <Line data={data} options={options} />
       </div>
 
